@@ -62,7 +62,7 @@ conviene hacer un juego más chico primero antes de volver a este.
 
 ## Reparto de trabajo
 
-- **[NOMBRE]** — netcode y sistemas (`scripts/`)
+- **[Mathi]** — netcode y sistemas (`scripts/`)
 - **[NOMBRE]** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
 
 Regla: nunca editar la misma escena al mismo tiempo. Avisar antes de tocar `scenes/main/`.
