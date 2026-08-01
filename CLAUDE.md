@@ -6,15 +6,28 @@ Sin fecha de entrega. Prioridad: entender lo que se construye, no llegar rápido
 
 ## Comandos
 
-```
-godot --path . --editor          # abrir el editor
-godot --path .                   # correr el juego
-godot --headless --path . --quit # verificar que el proyecto importa sin errores
+Godot **no está en el PATH**. Definir la ruta una vez por sesión de PowerShell:
+
+```powershell
+$godot = "C:\Users\joaqu\OneDrive\Documentos\Godot_v4.7.1-stable_win64.exe"
 ```
 
-Tests (una vez instalado gdUnit4 desde el AssetLib):
+La ruta es distinta en cada máquina. Para no repetirlo, agregar esa carpeta al PATH del
+usuario y usar `godot` directo.
+
+```powershell
+& $godot --path . --editor             # abrir el editor
+& $godot --path .                      # correr el juego (necesita main_scene definida)
+& $godot --headless --path . --import  # importar y verificar que no haya errores
 ```
-godot --headless -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --run-tests
+
+`--import` es el flag correcto para verificar el proyecto: importa los recursos y sale.
+No usar `--headless --quit`, que intenta correr el juego y falla mientras no haya
+`run/main_scene` en `project.godot`.
+
+Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
+```powershell
+& $godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --run-tests
 ```
 
 ## Estructura
@@ -35,6 +48,10 @@ Leer `docs/plan.md` y `docs/bitacora.md` antes de proponer cambios estructurales
 
 - **Static typing obligatorio.** `var health: float = 100.0`, `func take_damage(amount: int) -> void:`.
   Nunca declarar sin tipo. Sin tipos no hay detección de errores hasta runtime.
+- **Idioma: código en inglés, prosa en español.** Identificadores, funciones, variables,
+  clases y nombres de nodos en inglés (`take_damage`, `health`, `PlayerBody`). Comentarios,
+  documentación y commits en español. La API de Godot es en inglés: mezclar
+  `func tomar_daño()` con `move_and_slide()` en la misma línea se lee mal.
 - Archivos y variables en `snake_case`. Clases y nodos en `PascalCase`.
 - Un script por escena, mismo nombre que la escena.
 - Preferir señales sobre acoplamiento directo entre nodos.
@@ -51,11 +68,17 @@ y se balancean sin tocar código.
 
 ## Netcode
 
-Detalle completo en `docs/netcode.md`. Regla que no se negocia:
+Detalle completo y el porqué en `docs/netcode.md`. La autoridad está partida en dos:
 
-> **El host es autoridad sobre todo el estado. Los clientes mandan input, el host simula y replica.**
+> **El cuerpo del propio jugador es autoridad del peer dueño → `is_multiplayer_authority()`.
+> Todo el resto del estado es autoridad del host → `multiplayer.is_server()`.**
 
-Antes de escribir cualquier función que cambie estado, verificar que corra en el host.
+El cliente mueve su propia cápsula y el `MultiplayerSynchronizer` la replica. Vida, daño,
+inventario, hambre, sed, stamina, zombies, loot y mundo los resuelve el host: el cliente
+pide por RPC. Los dos checks no son intercambiables.
+
+Antes de escribir cualquier función que cambie estado: ¿esto es el movimiento del propio
+jugador? Si no lo es, corre en el host.
 
 ---
 

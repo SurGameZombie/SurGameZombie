@@ -1,21 +1,65 @@
 # Netcode
 
-## Modelo: listen server con autoridad del host
+## Modelo: listen server con autoridad dividida
 
 Un jugador corre el juego **y** la lógica de servidor en el mismo proceso. Los otros 1-3
 se conectan como clientes. No hay servidor dedicado.
 
 ## La regla
 
-> **El host es autoridad sobre todo el estado. Los clientes mandan input, el host simula
-> y replica estado.**
+La autoridad está partida en dos, y de qué lado cae cada cosa no se decide caso por caso:
 
-Un cliente nunca decide que le pegó a un zombie, que agarró un item, o que su hambre bajó.
-Manda "quiero atacar" / "quiero agarrar esto" y el host resuelve.
+> **El cuerpo del propio jugador es autoridad del peer dueño.
+> Todo el resto del estado del juego es autoridad del host.**
 
-**Por qué importa tanto:** no es anti-cheat (son 4 amigos). Es que sin una única fuente de
-verdad, el estado diverge entre máquinas y aparecen bugs imposibles de reproducir. Y
-retrofitear autoridad después es una reescritura completa, no un refactor.
+| Estado | Autoridad | Check en código |
+|---|---|---|
+| Posición y rotación del propio jugador | Peer dueño | `is_multiplayer_authority()` |
+| Vida, hambre, sed, stamina | Host | `multiplayer.is_server()` |
+| Daño, muerte, respawn | Host | `multiplayer.is_server()` |
+| Inventario, pickup, drop, contenedores | Host | `multiplayer.is_server()` |
+| Zombies: spawn, IA, vida, ataque | Host | `multiplayer.is_server()` |
+| Loot, día/noche, estado del mundo | Host | `multiplayer.is_server()` |
+
+Un cliente mueve su propia cápsula y el `MultiplayerSynchronizer` la replica hacia afuera.
+Pero un cliente nunca decide que le pegó a un zombie, que agarró un item, o que su hambre
+bajó: manda "quiero atacar" / "quiero agarrar esto" por RPC y el host resuelve.
+
+**Por qué el host es autoridad de todo lo demás:** no es anti-cheat (son 4 amigos). Es que
+sin una única fuente de verdad, el estado diverge entre máquinas y aparecen bugs imposibles
+de reproducir. Y retrofitear autoridad después es una reescritura completa, no un refactor.
+
+**Por qué el movimiento es la excepción:** la alternativa —el cliente manda input, el host
+simula, el host devuelve la posición— hace que cada paso se vea con un round-trip de
+retraso. Para que eso no se sienta horrible hace falta *client-side prediction*: el cliente
+simula localmente, guarda cada input, y cuando llega la corrección del host la reaplica
+sobre el estado corregido. Es de las cosas más difíciles del netcode y no es por donde se
+arranca un primer juego. Como no hay PvP ni nada que defender, confiarle al cliente su
+propia posición cuesta cero y hace que el movimiento se sienta bien desde el día uno.
+
+**El límite de la excepción:** el cliente es autoridad de *dónde está*, no de *qué implica*
+estar ahí. Toda consecuencia de la posición —si llega a agarrar ese item, si el zombie lo
+alcanza, si el disparo impacta— la sigue resolviendo el host, usando la posición ya
+replicada. Si algún día el movimiento pasa a importar (PvP, competitivo, gente que no
+conocemos), esto se revisa.
+
+### Consecuencia: el jugador tiene la autoridad partida adentro
+
+La escena del jugador no tiene un solo dueño. El cuerpo es del cliente, las stats son del
+host. En la práctica son dos `MultiplayerSynchronizer` en la misma escena con autoridades
+distintas:
+
+- Uno sobre el transform del `CharacterBody3D` → autoridad del peer dueño.
+- Otro sobre el nodo de stats (vida, hambre, sed, stamina) → autoridad del host (peer 1).
+
+**Cuidado con `set_multiplayer_authority()`:** su firma es
+`set_multiplayer_authority(id: int, recursive: bool = true)`. El `recursive` es `true` por
+default, así que llamarla en la raíz del jugador se la aplica **también al nodo de stats**
+y te lleva silenciosamente el estado de vida y hambre al cliente. Hay que volver a poner
+las stats en el host explícitamente después, o pasar `recursive = false` y asignar a mano.
+
+Tenerlo claro ahora evita el refactor de v0.2 y v0.4, cuando aparezcan vida y hambre y haya
+que meterlas en una escena que asumía un solo dueño.
 
 ## Herramientas de Godot
 
@@ -27,7 +71,28 @@ retrofitear autoridad después es una reescritura completa, no un refactor.
 
 No usar RPC para estado que cambia cada frame. Para eso está el Synchronizer.
 
-## Patrón de RPC
+El `MultiplayerSynchronizer` replica **desde la autoridad del nodo hacia todos los demás**.
+O sea que la autoridad no es un permiso: es la dirección en la que fluyen los datos. Por eso
+el transform del jugador tiene autoridad del cliente (fluye cliente → host → resto) y las
+stats tienen autoridad del host (fluye host → todos).
+
+## Los dos patrones
+
+Todo el código de red del proyecto entra en uno de estos dos moldes. Si estás escribiendo
+algo que no encaja en ninguno, pará y preguntá antes de seguir.
+
+### 1. Movimiento propio — el cliente manda
+
+```gdscript
+# En el script del jugador. Solo el dueño lee input y mueve el cuerpo;
+# el Synchronizer del transform se encarga de replicarlo hacia afuera.
+func _physics_process(delta: float) -> void:
+    if not is_multiplayer_authority():
+        return
+    # leer input, mover, move_and_slide()
+```
+
+### 2. Todo lo demás — el cliente pide, el host decide
 
 ```gdscript
 # Cliente pide, host decide, host replica.
@@ -67,8 +132,34 @@ Levantar host + 2 clientes en la misma PC. Sin esto, testear multiplayer es inso
 
 ## Objetivo de la v0.1
 
-Dos cápsulas moviéndose sincronizadas en una caja, host + 1 cliente por IP en LAN.
-Sin zombies, sin items, sin UI más allá de dos botones.
+Dos cápsulas moviéndose sincronizadas en una caja, host + 1 cliente por IP en LAN, en
+primera persona. Sin zombies, sin items, sin UI más allá de dos botones.
 
 Es el milestone más importante del proyecto: si el esqueleto de red no está limpio acá,
 todo lo que se construya encima hereda el problema.
+
+### Cómo se resuelve v0.1 con este modelo
+
+Concreto, para que no haya que decidirlo mientras se escribe:
+
+1. `scripts/net/network_manager.gd` crea el `ENetMultiplayerPeer` — hostear en un puerto
+   fijo, o conectarse a una IP. Es el único archivo que sabe qué transporte se usa.
+2. El **host** es el único que instancia jugadores. Un `MultiplayerSpawner` en la escena
+   del mundo replica cada instancia al resto.
+3. Al instanciar el jugador del peer N, el host llama `set_multiplayer_authority(N)` sobre
+   la raíz del jugador. Eso es lo que hace que después `is_multiplayer_authority()` sea
+   `true` en la máquina de N y `false` en las demás.
+4. El script del jugador lee input y llama `move_and_slide()` **solo si**
+   `is_multiplayer_authority()`. Las otras cápsulas no simulan nada: reciben el transform.
+5. Un `MultiplayerSynchronizer` en el jugador replica posición y rotación. Su autoridad es
+   la del peer dueño, igual que la raíz.
+6. La cámara se activa (`current = true`) **solo** en la instancia local. Si no, cada
+   cliente ve por los ojos de la última cápsula que se instanció.
+
+**En v0.1 no hay un solo RPC del patrón 2**, porque todavía no hay estado del host que
+pedir. El primero aparece en v0.2 con el daño. Que v0.1 no lo necesite es la señal de que
+el milestone está bien recortado.
+
+**Criterio de terminado:** host y cliente se ven moverse, en tiempo real, sin tirones, y
+al cerrar el cliente el host no crashea. Eso último es la mitad del trabajo y es lo que
+se suele olvidar.

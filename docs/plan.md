@@ -61,6 +61,13 @@ Un jugador corre el juego **y** la lógica de servidor en el mismo proceso. Los 
 
 > El host es autoridad sobre todo el estado del juego. Los clientes mandan *input*. El host simula y replica *estado*.
 
+> **[Revisado — ver `docs/netcode.md`, que es la fuente de verdad.]** Esta regla resultó
+> demasiado absoluta en la práctica: aplicarla al movimiento del propio jugador exige
+> client-side prediction, que es demasiado para empezar. El modelo final afloja *solo* el
+> movimiento (autoridad del peer dueño) y mantiene el host como autoridad de todo el resto.
+> El párrafo de abajo sigue explicando bien **por qué** hace falta una única fuente de
+> verdad, que es el motivo por el que el resto del estado no se afloja.
+
 Un cliente nunca decide que le pegó a un zombie, que agarró un item, o que su hambre bajó. Manda "quiero atacar" / "quiero agarrar esto" y el host resuelve. Esto no es paranoia anti-cheat (son 4 amigos), es que **sin una única fuente de verdad, el estado diverge entre máquinas y el juego se rompe de formas imposibles de debuggear**.
 
 Retrofitear autoridad después es una reescritura completa. Por eso va en el commit 1 y por eso va como `path-scoped rule` en `.claude/rules/`.
@@ -92,7 +99,7 @@ Dijiste "supervivencia realista" y también "primera versión simple". Están en
 ### Milestones — cada uno tiene que ser jugable
 
 **v0.1 — "Se mueve"** *(el milestone más importante de todos)*
-Un mapa chico hecho a mano (una manzana, no un mundo abierto). Character controller en primera o tercera persona. Host + 1 cliente conectados por IP en LAN, viéndose moverse en tiempo real. Sin zombies, sin items, sin nada.
+Un mapa chico hecho a mano (una manzana, no un mundo abierto). Character controller en primera persona. Host + 1 cliente conectados por IP en LAN, viéndose moverse en tiempo real. Sin zombies, sin items, sin nada.
 *Por qué primero:* prueba el esqueleto de red. Si esto no funciona limpio, nada de lo demás importa. Y si sale mal, descubrirlo acá cuesta un día, no tres meses.
 
 **v0.2 — "Mata"**

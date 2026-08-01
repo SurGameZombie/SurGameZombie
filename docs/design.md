@@ -39,7 +39,6 @@ llevar munición cuesta.
 
 - [ ] Nombre del juego
 - [ ] Ambientación concreta: ¿dónde pasa? ¿un pueblo, un complejo industrial, un barrio?
-- [ ] Primera persona o tercera
 - [ ] Qué pasa al morir
 - [ ] Condición de victoria de una sesión (¿hay una? ¿es supervivencia infinita?)
 - [ ] Lista de los primeros 10 items
@@ -62,12 +61,7 @@ conviene hacer un juego más chico primero antes de volver a este.
 
 ## Reparto de trabajo
 
-<<<<<<< HEAD
-- **[Mathi]** — netcode y sistemas (`scripts/`)
-- **[NOMBRE]** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
-=======
-- **[Mathi]** — netcode y sistemas (`scripts/`)
-- **[Joaquin]** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
->>>>>>> de9e6dc8b1280e2f5235a62453ca043ae0bcbbba
+- **Mathi** — netcode y sistemas (`scripts/`)
+- **Joaquin** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
 
 Regla: nunca editar la misma escena al mismo tiempo. Avisar antes de tocar `scenes/main/`.

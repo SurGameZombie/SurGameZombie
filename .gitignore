@@ -1,12 +1,17 @@
 # Godot 4+
 .godot/
 /android/
+*.tmp
 
 # Exportaciones
 /build/
 *.exe
 *.pck
 *.zip
+
+# Presets de exportación: guardan rutas locales y, si algún día firmamos builds,
+# credenciales. No van al repo.
+export_presets.cfg
 
 # Sistema
 .DS_Store

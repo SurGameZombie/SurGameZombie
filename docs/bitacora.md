@@ -8,8 +8,13 @@ alguien va a necesitar recordar en dos meses.
 ## Estado actual
 
 **Setup terminado.** Los dos pueden clonar, editar, subir y bajar cambios.
-**Pendiente antes de escribir código:** tutorial oficial 3D de Godot (los dos) y completar
-los `[DECIDIR]` de `docs/design.md`.
+
+**v0.1 está desbloqueada.** Las tres decisiones que faltaban para poder escribir el primer
+código —modelo de autoridad, primera o tercera persona, idioma del código— están tomadas.
+Cómo se resuelve v0.1 concretamente está escrito en `docs/netcode.md`.
+
+**Pendiente antes de escribir código:** tutorial oficial 3D de Godot, los dos.
+Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
 
 ---
 
@@ -72,12 +77,31 @@ addons están en GDScript.
 **Static typing obligatorio.** GDScript es dinámico por default y eso rompe la detección
 de errores. Sin tipos, ni el editor ni Claude Code agarran nada hasta runtime.
 
-### Red: listen server con autoridad total del host
+### Red: listen server con autoridad dividida
 
 Un jugador hostea y juega en el mismo proceso. 2-4 jugadores.
 
-Regla que no se negocia: el host es autoridad sobre todo el estado, los clientes mandan
-input. Retrofitear esto después es una reescritura, por eso va desde el commit uno.
+**Revisado el 1/8/2026.** La regla original decía "el host es autoridad sobre *todo* el
+estado". Resultó demasiado absoluta: aplicada al movimiento del propio jugador obliga a
+implementar client-side prediction —el cliente simula, guarda cada input y lo reaplica
+cuando llega la corrección del host—, porque si no, cada paso se ve con un round-trip de
+retraso. Es de las cosas más difíciles del netcode y no es por donde arranca un primer
+juego.
+
+El modelo definitivo afloja **solo** el movimiento:
+
+- El cuerpo del propio jugador es autoridad del peer dueño → `is_multiplayer_authority()`
+- Todo el resto (vida, daño, inventario, hambre, sed, stamina, zombies, loot, mundo) es
+  autoridad del host → `multiplayer.is_server()`
+
+Se puede aflojar ahí y en ningún otro lado porque no hay PvP ni anti-cheat que defender:
+confiarle al cliente su propia posición cuesta cero. Lo que **no** se afloja es la
+consecuencia de esa posición: si el disparo impacta, si el zombie lo alcanza o si llega a
+agarrar el item lo sigue decidiendo el host. Detalle completo y el porqué en
+`docs/netcode.md`, que es la fuente de verdad.
+
+Retrofitear autoridad después sigue siendo una reescritura, por eso el reparto va definido
+desde el commit uno.
 
 **Plan de transporte:** ENet por IP ahora → netfox.noray para v1.0 (sin port forwarding) →
 SteamMultiplayerPeer si alguna vez va a Steam. La creación del peer vive solo en
@@ -96,6 +120,16 @@ SteamMultiplayerPeer si alguna vez va a Steam. La creación del peer vive solo e
 Kenney + KayKit como base, Quaternius para animaciones y personajes. La coherencia visual
 importa más que la calidad individual de los modelos: mezclar packs de estilos distintos da
 un asset flip.
+
+### Tooling: MCP server `hi-godot/godot-ai`
+
+Instalado y configurado (commit `37fc970`). El plugin vive en `addons/godot_ai/` y está
+commiteado en el repo, así que las dos máquinas corren la misma versión.
+
+No es ninguno de los tres que evalúa `docs/plan.md` §5 (GDAI, Coding-Solo, alexmeckes):
+esa lista quedó vieja. *[Completar: por qué se eligió este.]*
+
+Registra un autoload `_mcp_game_helper` en `project.godot`. Es esperado, no un accidente.
 
 ---
 
@@ -124,6 +158,26 @@ falla.**
 
 **"nothing to commit, working tree clean" con cambios hechos.** El archivo estaba editado
 pero sin guardar. En VS Code, el puntito blanco en la pestaña significa sin guardar.
+
+**gdUnit4 no se pudo instalar desde el AssetLib.** El botón *Download* quedaba
+deshabilitado, con la versión colgada en `Version: Loading...` indefinidamente.
+**Sin resolver.** Consecuencia: no hay tests headless todavía, así que el comando de tests
+de `CLAUDE.md` no corre.
+
+→ Alternativa a probar: bajar el release directo de GitHub y descomprimir `addons/gdUnit4/`
+a mano en el repo, salteando el AssetLib.
+
+**Godot pisa los cambios que git hace en `project.godot`.** Si un `git pull` modifica
+`project.godot` con el editor abierto, Godot detecta el cambio externo y pregunta qué
+hacer. Hay que elegir **"Reload from disk"**.
+
+Nunca **"Ignore external changes"**: eso deja al editor trabajando con la versión vieja en
+memoria, y la primera vez que Godot guarde project settings reescribe el archivo con esa
+versión y borra lo que bajó de git. Como `project.godot` lo tocan los dos (autoloads, input
+map, capas de física), es la forma más fácil de pisarle el trabajo al otro.
+
+→ **Regla permanente: si `project.godot` cambió por git, "Reload from disk". Lo más seguro
+es cerrar el editor antes de hacer `git pull`.**
 
 ---
 
@@ -154,11 +208,11 @@ no un feature que se agrega.
 ## Pendiente
 
 - [ ] Tutorial oficial 3D de Godot, los dos por separado
-- [ ] Completar los `[DECIDIR]` de `docs/design.md`: nombre, primera o tercera persona,
-      ambientación, qué pasa al morir, condición de victoria, primeros 10 items
+- [ ] Completar los `[DECIDIR]` de `docs/design.md`: nombre, ambientación, qué pasa al
+      morir, condición de victoria, primeros 10 items. **"Qué pasa al morir" bloquea v0.2**,
+      el resto puede esperar
 - [ ] Definir quién tiene el plan Pro de Claude
-- [ ] Instalar gdUnit4 desde el AssetLib
-- [ ] Instalar Claude Code y un MCP server de Godot
+- [ ] Instalar gdUnit4 — el AssetLib falla (ver "Problemas"). Probar el `.zip` de GitHub
 - [ ] Bajar los packs de assets y decidir la familia visual
 - [ ] Dibujar el mapa en papel
 
@@ -168,3 +222,13 @@ no un feature que se agrega.
 
 **[1/8/2026]** — Setup completo. Organización, repo, estructura de carpetas, `CLAUDE.md`,
 rules y docs iniciales. Verificado el ida y vuelta de commits entre las dos máquinas.
+
+**[1/8/2026]** — Auditoría de los docs y corrección de inconsistencias. Lo importante:
+la regla de autoridad de red pasó a **autoridad dividida** (ver "Decisiones tomadas"),
+se fijó **primera persona**, y se definió el **idioma del código** (inglés para
+identificadores, español para comentarios y docs). Además: se resolvió un conflicto de
+merge que había quedado commiteado en `docs/design.md`, se crearon `scripts/player/`,
+`scripts/enemies/` y `scripts/ui/`, se amplió el scope de `.claude/rules/netcode.md` a
+`scenes/**` y a esas carpetas, se agregaron `export_presets.cfg` y `*.tmp` al `.gitignore`,
+y se arreglaron los comandos de `CLAUDE.md` (Godot no está en el PATH: el ejecutable está
+en `C:\Users\joaqu\OneDrive\Documentos\Godot_v4.7.1-stable_win64.exe`).
