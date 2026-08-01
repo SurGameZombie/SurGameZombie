@@ -115,6 +115,18 @@ SteamMultiplayerPeer si alguna vez va a Steam. La creación del peer vive solo e
 - **Mapa cerrado y denso, no mundo abierto.** Un mundo grande y vacío es más caro en red y
   menos divertido que un pueblo chico bien hecho.
 
+### Character controller: propio, no `expressobits/character-controller`
+
+Lo escribimos nosotros. El addon nos ahorra una tarde a cambio de no entender lo más básico
+del juego, y escribirlo a mano es la mejor forma de entender Godot: `CharacterBody3D`,
+`_physics_process`, `move_and_slide()` y el manejo de input son la base de todo lo que
+viene después.
+
+Es una decisión de aprendizaje, no técnica. El addon seguramente sea mejor código que el
+que escribamos la primera vez. Pero el riesgo declarado de este proyecto es perder contacto
+con el propio código (ver "Riesgos identificados"), y el controller del jugador es
+justamente el archivo que no nos podemos permitir tratar como caja negra.
+
 ### Assets: CC0 gratis, una sola familia visual
 
 Kenney + KayKit como base, Quaternius para animaciones y personajes. La coherencia visual
@@ -126,8 +138,15 @@ un asset flip.
 Instalado y configurado (commit `37fc970`). El plugin vive en `addons/godot_ai/` y está
 commiteado en el repo, así que las dos máquinas corren la misma versión.
 
+Por qué este y no otro:
+
+- Se autoconfigura con Claude Code desde el propio editor, sin editar configs a mano.
+- Licencia MIT.
+- Mantenimiento activo.
+- Expone 43 tools contra el editor en vivo.
+
 No es ninguno de los tres que evalúa `docs/plan.md` §5 (GDAI, Coding-Solo, alexmeckes):
-esa lista quedó vieja. *[Completar: por qué se eligió este.]*
+esa lista quedó vieja porque el plan se escribió **antes** de compararlos de verdad.
 
 Registra un autoload `_mcp_game_helper` en `project.godot`. Es esperado, no un accidente.
 
@@ -231,4 +250,9 @@ merge que había quedado commiteado en `docs/design.md`, se crearon `scripts/pla
 `scripts/enemies/` y `scripts/ui/`, se amplió el scope de `.claude/rules/netcode.md` a
 `scenes/**` y a esas carpetas, se agregaron `export_presets.cfg` y `*.tmp` al `.gitignore`,
 y se arreglaron los comandos de `CLAUDE.md` (Godot no está en el PATH: el ejecutable está
-en `C:\Users\joaqu\OneDrive\Documentos\Godot_v4.7.1-stable_win64.exe`).
+en `C:\Godot\Godot_v4.7.1-stable_win64.exe`).
+
+**[1/8/2026]** — Tres decisiones más, todas para desbloquear v0.1: **character controller
+propio** (ver arriba), **escala y números base** del jugador y el mundo (en
+`docs/design.md`), y **`project.godot` pasa a tener un solo dueño, Mathi** (en el reparto
+de trabajo de `docs/design.md`). Con esto v0.1 no tiene ninguna decisión pendiente.

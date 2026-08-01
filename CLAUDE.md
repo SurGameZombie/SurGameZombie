@@ -9,7 +9,7 @@ Sin fecha de entrega. Prioridad: entender lo que se construye, no llegar rápido
 Godot **no está en el PATH**. Definir la ruta una vez por sesión de PowerShell:
 
 ```powershell
-$godot = "C:\Users\joaqu\OneDrive\Documentos\Godot_v4.7.1-stable_win64.exe"
+$godot = "C:\Godot\Godot_v4.7.1-stable_win64.exe"
 ```
 
 La ruta es distinta en cada máquina. Para no repetirlo, agregar esa carpeta al PATH del

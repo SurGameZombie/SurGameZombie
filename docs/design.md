@@ -35,6 +35,33 @@ llevar munición cuesta.
 **Muerte:** [DECIDIR] ¿respawn con pérdida de inventario? ¿el mapa se resetea?
 ¿los otros jugadores pueden revivirte?
 
+## Escala y números base
+
+**Valores de arranque, para tunear.** Están acá para que nada se escriba con números
+inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
+
+| | |
+|---|---|
+| Escala del mundo | 1 unidad de Godot = 1 metro |
+| Altura del jugador | 1.8 m |
+| Velocidad de caminata | 4 m/s |
+| Velocidad de corrida | 7 m/s |
+
+La escala en metros no es cosmética: hace que las físicas de Godot (gravedad, masas,
+fricción) den valores realistas sin tener que compensar, y es la referencia contra la que
+se ajusta la escala de los assets al importarlos.
+
+Dos notas de implementación, para la v0.1:
+
+- **1.8 m es la altura del cuerpo**, no la de la cámara. En primera persona la cámara va a
+  la altura de los ojos, un poco más abajo (~1.6-1.7 m). Si se pone a 1.8 se siente como
+  flotar.
+- Referencias del mundo real, para tunear contra algo: una persona camina a ~1.4 m/s,
+  trota a ~3 m/s y esprinta a ~8 m/s. O sea que estos valores de arranque son más rápidos
+  que la vida real, que es lo normal en juegos porque la velocidad realista se siente
+  lentísima. Si el juego tiene que sentirse pesado y torpe, es de acá de donde hay que
+  bajar.
+
 ## Huecos por completar
 
 - [ ] Nombre del juego
@@ -63,5 +90,9 @@ conviene hacer un juego más chico primero antes de volver a este.
 
 - **Mathi** — netcode y sistemas (`scripts/`)
 - **Joaquin** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
+
+**`project.godot` es de Mathi.** Es el archivo que los dos necesitan tocar (autoloads,
+input map, capas de física) y el que peor mergea, así que tiene un solo dueño. Si Joaquin
+necesita cambiar algo ahí, avisa antes.
 
 Regla: nunca editar la misma escena al mismo tiempo. Avisar antes de tocar `scenes/main/`.
