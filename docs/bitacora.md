@@ -207,6 +207,22 @@ de `CLAUDE.md` no corre.
 → Alternativa a probar: bajar el release directo de GitHub y descomprimir `addons/gdUnit4/`
 a mano en el repo, salteando el AssetLib.
 
+**Un autoload nuevo no existe para el editor abierto hasta reiniciarlo.** Agregar el
+autoload deja `project.godot` correcto (`NetworkManager="*res://..."`, con el `*` de
+singleton) y `autoload_manage list` lo muestra, pero cualquier script que lo nombre falla
+con `Compile Error: Identifier not found: NetworkManager`. El editor registra los nombres
+de autoload como identificadores globales **al arrancar**, y agregarlo en caliente no
+vuelve a correr ese paso.
+
+`filesystem_manage(op="scan")` **no alcanza**: reconstruye la tabla de `class_name`, no la
+de autoloads (`global_classes_registered_delta: 0`).
+
+→ **Regla permanente: después de agregar un autoload, reiniciar el editor.** Para
+distinguir "el código está mal" de "el editor no lo ve", correrlo en un proceso limpio:
+`& $godot --headless --path . --quit-after 60`. Si ahí arranca sin errores, el código está
+bien. Ese comando ahora sirve porque ya existe `run/main_scene`; la advertencia de
+`CLAUDE.md` sobre `--quit` era de cuando no estaba definida.
+
 **Godot pisa los cambios que git hace en `project.godot`.** Si un `git pull` modifica
 `project.godot` con el editor abierto, Godot detecta el cambio externo y pregunta qué
 hacer. Hay que elegir **"Reload from disk"**.
