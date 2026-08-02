@@ -8,10 +8,23 @@ las reglas del proyecto tengan una razón detrás y no se relajen por convenienc
 ## Los modos de falla documentados
 
 **Version drift.** Los modelos vieron mucho código de Godot 3. El error obvio
-(`KinematicBody`) lo marca el editor. El peligroso es el que compila y no hace nada:
-`button.connect("pressed", self, "_on_pressed")` es sintaxis válida que en Godot 4 no
-conecta nada porque cambió la firma. Poner la versión explícita en el prompt corta esta
-contaminación aproximadamente a la mitad — es la única medida con efecto cuantificado.
+(`KinematicBody`) lo marca el editor. El caso que más se cita es
+`button.connect("pressed", self, "_on_pressed")`, la firma vieja de `connect()`.
+
+**Verificado en 4.7.1** (no es lo que suele decirse, que "compila y no hace nada"):
+
+- **Con tipado estático** es **error de parseo** y el script directamente no carga:
+  `Invalid argument for "connect()" function: argument 2 should be "Callable"`.
+- **Sobre un `Variant`** es **error de runtime** (`Cannot connect to 'x': the provided
+  callable is null`) y la señal queda desconectada, pero el juego sigue andando.
+
+**El peligroso es el segundo**, porque el botón se ve perfecto y no hace nada, y el error
+queda solo en el panel Debugger. **El static typing obligatorio lo previene**: si el tipo
+del receptor se conoce, el error salta al parsear y nunca llega a runtime. Es una razón
+más para la regla de tipado, además de la detección de errores.
+
+Poner la versión explícita en el prompt corta esta contaminación aproximadamente a la
+mitad — es la única medida con efecto cuantificado.
 
 **Ceguera de runtime.** Claude Code edita archivos pero no puede apretar play. En Godot
 casi todos los bugs aparecen en runtime, así que este es el techo estructural. Un dev

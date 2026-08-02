@@ -88,11 +88,11 @@ conviene hacer un juego más chico primero antes de volver a este.
 
 ## Reparto de trabajo
 
-- **Mathi** — netcode y sistemas (`scripts/`)
-- **Joaquin** — mundo, contenido y assets (`scenes/`, `assets/`, `resources/`)
+Los dos trabajamos en todo el proyecto. No hay carpetas con dueño fijo, incluido
+`project.godot`.
 
-**`project.godot` es de Mathi.** Es el archivo que los dos necesitan tocar (autoloads,
-input map, capas de física) y el que peor mergea, así que tiene un solo dueño. Si Joaquin
-necesita cambiar algo ahí, avisa antes.
+La regla que lo reemplaza:
 
-Regla: nunca editar la misma escena al mismo tiempo. Avisar antes de tocar `scenes/main/`.
+- Avisarse antes de empezar a trabajar, y decir sobre qué archivos o carpetas.
+- Nunca dos personas sobre el mismo archivo al mismo tiempo.
+- `git pull` antes de arrancar, siempre.

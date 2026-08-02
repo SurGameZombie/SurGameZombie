@@ -234,6 +234,14 @@ no un feature que se agrega.
 - [ ] Instalar gdUnit4 — el AssetLib falla (ver "Problemas"). Probar el `.zip` de GitHub
 - [ ] Bajar los packs de assets y decidir la familia visual
 - [ ] Dibujar el mapa en papel
+- [ ] **Playtest de quince minutos sin código a la vista, por cada milestone.** Jugarlo,
+      no revisarlo. Es la versión barata del "testigo independiente": el sesgo de
+      autoevaluación no se corrige leyendo el propio diff
+- [ ] **Al tercer mes, revisar si la velocidad de avance cayó.** Está medido que con IA la
+      velocidad sube fuerte el mes 1, la mitad el mes 2 y vuelve a cero el mes 3, mientras
+      la complejidad queda +41% permanente (`docs/investigacion-claude-code.md`). Si lo
+      sentimos, no es impresión: es el patrón. La contramedida es refactorizar a propósito,
+      no acelerar
 
 ---
 
@@ -256,3 +264,31 @@ en `C:\Godot\Godot_v4.7.1-stable_win64.exe`).
 propio** (ver arriba), **escala y números base** del jugador y el mundo (en
 `docs/design.md`), y **`project.godot` pasa a tener un solo dueño, Mathi** (en el reparto
 de trabajo de `docs/design.md`). Con esto v0.1 no tiene ninguna decisión pendiente.
+
+**[2/8/2026]** — Sesión de proceso, sin código. Entraron `docs/proceso.md` (commits,
+documentación, diagnóstico de errores) y `docs/investigacion-claude-code.md` (modos de
+falla medidos de la IA en gamedev), y el resto de los docs se alineó con ellos.
+
+**El reparto de trabajo por carpetas queda sin efecto** y revierte lo decidido el
+1/8/2026: los dos trabajamos en todo, **`project.godot` incluido**, y ya no tiene dueño.
+Lo reemplaza avisarse antes de arrancar diciendo sobre qué archivos, nunca dos personas
+sobre el mismo archivo a la vez, y `git pull` siempre antes de empezar. `plan.md` §5 quedó
+con la nota de revisión encima del párrafo viejo, igual que §2 con la regla de autoridad.
+
+Se escribieron las **seis primeras ADRs** en `docs/decisions/`, reconstruidas desde esta
+bitácora y desde `plan.md`: engine, lenguaje, autoridad de red, plan de transporte,
+character controller y MCP. Donde el porqué no estaba registrado, quedó escrito que no lo
+está, en vez de inventarlo.
+
+En `CLAUDE.md`: el formato de las respuestas pasó a ser explícito (qué cambié / probá vos
+/ decidí vos, y qué no escribir nunca), y la versión de Godot quedó fijada arriba de todo.
+Para no pasar las 200 líneas se movieron tres secciones a `.claude/rules/limites.md`.
+Rules nuevas: `commits.md` y `limites.md`, las dos con scope a todo el repo.
+`.claude/rules/gdscript.md` sumó el checklist de los 10 pitfalls, y `docs/netcode.md` la
+advertencia de que el `MultiplayerSynchronizer` **no** sincroniza el inventario solo
+(v0.3: hay que serializar a `PackedByteArray` a mano).
+
+**Un dato que se verificó corriendo Godot 4.7.1**, porque circula mal en todos lados: la
+firma vieja `connect("pressed", self, "_on_x")` no "compila y no hace nada". Con tipado
+estático es error de parseo y el script no carga; solo sobre un `Variant` llega a runtime
+y deja la señal muerta en silencio. El static typing obligatorio previene el caso malo.

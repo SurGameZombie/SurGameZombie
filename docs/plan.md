@@ -246,6 +246,15 @@ Qué testear: **la lógica pura**, no el rendering. Matemática de inventario (s
 
 ### Trabajar de a dos
 
+> **[Revisado el 2/8/2026 — ver `docs/design.md` → "Reparto de trabajo", que es la fuente
+> de verdad.]** El reparto por carpetas quedó sin efecto: los dos trabajamos en todo el
+> proyecto y no hay carpetas con dueño fijo, `project.godot` incluido. Lo reemplaza
+> avisarse antes de arrancar diciendo sobre qué archivos o carpetas, nunca dos personas
+> sobre el mismo archivo al mismo tiempo, y `git pull` antes de empezar siempre. El
+> párrafo de abajo sigue explicando bien **por qué** hace falta alguna regla acá —mergear
+> escenas a mano duele— que es el motivo por el que el reparto se reemplazó en vez de
+> simplemente borrarse.
+
 Los `.tscn` son texto y se pueden mergear, pero mergear escenas a mano es doloroso igual. Regla práctica:
 
 - **Uno es dueño de netcode + sistemas** (`scripts/`), **el otro de mundo + contenido** (`scenes/`, `assets/`, `resources/`).

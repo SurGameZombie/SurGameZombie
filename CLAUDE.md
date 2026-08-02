@@ -1,6 +1,19 @@
 # ZOMBIE-COOP
 
-Survival co-op en primera persona para 2-4 jugadores. Godot 4.7 + GDScript.
+## Engine: Godot 4.7.1-stable. Sintaxis de Godot 4, nunca de Godot 3.
+
+Godot 3 domina el training data, así que el default es equivocarse. Declarar la versión
+explícitamente corta esa contaminación aproximadamente a la mitad, y es la única medida
+con efecto medido (`docs/investigacion-claude-code.md`). Por eso está acá arriba.
+
+La tabla de reemplazos de Godot 3 → 4.7 y el checklist de los 10 pitfalls están en
+`.claude/rules/gdscript.md`, que se carga solo al tocar cualquier `.gd`. Si dudás de que
+una clase, método o propiedad exista en **Godot 4.7**, verificá en la documentación antes
+de escribirla. Ver `.claude/rules/limites.md` → "Avisá cuando estés adivinando".
+
+---
+
+Survival co-op en primera persona para 2-4 jugadores. GDScript con static typing.
 Proyecto hobby de dos personas que saben programar pero es su primer videojuego.
 Sin fecha de entrega. Prioridad: entender lo que se construye, no llegar rápido.
 
@@ -39,10 +52,15 @@ Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
 - `tests/` — suites de gdUnit4
 - `docs/` — `plan.md` (arquitectura, stack y milestones), `design.md` (qué es el juego),
   `netcode.md` (reglas de red), `bitacora.md` (decisiones tomadas y problemas ya resueltos),
-  `decisions/` (ADRs)
+  `proceso.md` (cómo commiteamos, cómo documentamos y cómo buscamos errores),
+  `investigacion-claude-code.md` (modos de falla medidos de la IA en gamedev, los 10
+  pitfalls de GDScript y las reglas operativas que salen de ahí), `decisions/` (ADRs)
 - `addons/` — plugins de terceros. **No editar nada acá dentro.**
 
 Leer `docs/plan.md` y `docs/bitacora.md` antes de proponer cambios estructurales.
+Leer `docs/proceso.md` antes de escribir cualquier mensaje de commit.
+Leer `docs/investigacion-claude-code.md` antes de proponer cambios de proceso o de
+herramientas.
 
 ## Reglas de código
 
@@ -98,26 +116,47 @@ si un sistema nuevo tiene que funcionar en multiplayer desde el día uno.
 
 Si la duda es menor, asumí lo razonable y decí explícitamente qué asumiste.
 
-### Decí siempre qué NO pudiste verificar
+### Formato de las respuestas
 
-No podés apretar play ni ver el juego corriendo. Sé explícito sobre eso.
+El cierre de una tarea tiene tres partes, en este orden. Las que no aplican se
+omiten enteras, no se escriben vacías.
 
-Al terminar cualquier tarea, cerrá con tres cosas:
+**Qué cambié** — una o dos frases. Qué hace ahora el código. No repitas el diff,
+lo vamos a leer.
 
-1. **Qué verificaste** (compila, importa sin errores, tests en verde)
-2. **Qué NO pudiste verificar** (si se ve bien, si se siente bien, si los números están
-   balanceados, si la latencia se nota)
-3. **Qué tienen que probar ellos a mano**, con pasos concretos y qué debería pasar
-   si está bien
+**Probá vos** — solo lo que no podés verificar: si se ve bien, si se siente bien,
+si los números están balanceados, si la latencia se nota. Formato: acción concreta
+→ qué debería pasar si está bien. Si no hay nada, omitila.
 
-### Los tests en verde no significan que esté terminado
+**Decidí vos** — solo si hay una decisión real bloqueada. Una pregunta concreta
+con opciones. No un ensayo.
 
-El fallo característico de este tipo de trabajo es: los tests pasan, el código compila,
-el juego arranca, y el juego es injugable.
+Objetivo de largo: media pantalla. Si no entra, es señal de que la tarea era
+demasiado grande y hay que partirla.
 
-**Nunca declares una tarea de gameplay terminada porque los tests pasen.** Los tests miden
-corrección, no diversión, ni ritmo, ni sensación. Cuando toques algo que afecta cómo se
-juega, decilo así y pediles que lo jueguen.
+### Qué no escribir nunca
+
+- Lo que verificaste y salió bien. Si compila y los tests pasan, no lo menciones.
+  Si algo falló, sí.
+- Lo que ya está escrito en CLAUDE.md, en las rules o en los docs.
+- Decisiones de diseño ya tomadas y registradas.
+- Reformulaciones del pedido antes de contestarlo.
+- Resúmenes de lo que vas a hacer, antes de hacerlo.
+- Listas de archivos tocados: el diff ya los muestra.
+
+### Cuándo sí extenderte
+
+- Cuando estés adivinando o no puedas verificar algo que importa
+- Cuando encuentres un problema que no te pedimos mirar
+- Cuando te pidamos explicación explícitamente
+- Cuando estés proponiendo un plan
+
+Ahí largo está bien. En el resto, el default es corto.
+
+### La regla que resume todo
+
+Si algo lo podés resolver o verificar vos, resolvelo y no lo cuentes.
+Si no podés, decilo en una línea accionable.
 
 ### Están aprendiendo — explicá
 
@@ -131,17 +170,6 @@ su propio código, no por falta de features.
 - Si te preguntan "por qué hiciste esto así", es una pregunta real. Contestala en serio,
   y si había una alternativa mejor decilo.
 
-### Avisá cuando estés adivinando
-
-GDScript está poco representado en el training data y tiene unas 850 clases. Alucinar una
-API que no existe es el error más común acá.
-
-Si no estás seguro de que una clase, método o propiedad exista en **Godot 4.7**, decilo
-antes de escribirla y verificá en la documentación. Es preferible decir "no estoy seguro
-de que esto exista, dejame chequear" que entregar código que no compila.
-
-Distinguí siempre: dato verificado, inferencia, y suposición.
-
 ### Tareas chicas
 
 Si un pedido es demasiado grande para hacerlo bien de una, **proponé partirlo antes de
@@ -150,15 +178,9 @@ arrancar** en vez de escribir mil líneas.
 Si la sesión se está haciendo larga y notás que estás perdiendo el hilo de qué archivos ya
 tocaste, decilo y sugerí cortar ahí y arrancar limpio.
 
-### Lo que no es tuyo
-
-El diseño del mundo, la sensación al caminar y disparar, el balance, la elección de assets
-y la coherencia visual los deciden ellos. Podés opinar si te preguntan, pero no lo resuelvas
-solo ni asumas que tu criterio de "se ve bien" vale acá.
-
 ## Qué NO hacer
 
-- **No inventar APIs de Godot.** Ver arriba.
+- **No inventar APIs de Godot.** Ver `.claude/rules/limites.md`.
 - **No usar sintaxis de Godot 3.** En Godot 4 es `@onready`, `@export`, `await`
   (no `onready`, `export`, `yield`).
 - No refactorizar archivos que no se pidieron tocar.

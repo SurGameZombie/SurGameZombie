@@ -76,6 +76,22 @@ O sea que la autoridad no es un permiso: es la dirección en la que fluyen los d
 el transform del jugador tiene autoridad del cliente (fluye cliente → host → resto) y las
 stats tienen autoridad del host (fluye host → todos).
 
+### Advertencia para v0.3: el Synchronizer no sincroniza el inventario
+
+El `MultiplayerSynchronizer` maneja **primitivas y tipos built-in**: `float`, `int`, `bool`,
+`Vector3`, `Transform3D`. Vida, hambre, sed y stamina entran ahí sin problema, y por eso
+v0.1, v0.2 y v0.4 no se topan con este límite.
+
+El inventario sí. Un inventario es una estructura anidada —una lista de slots, cada uno con
+un item, una cantidad y quizás durabilidad— y eso **no lo replica el Synchronizer solo**.
+Hay que encodearlo y decodearlo a mano en un `PackedByteArray`. Unity trae `SyncList` y
+`SyncDictionary` para esto; Godot no trae equivalente.
+
+**No asumir que el Synchronizer lo resuelve.** Cuando llegue v0.3, la serialización del
+inventario es una tarea propia con su propio presupuesto de tiempo, no un detalle de la
+tarea de inventario. Si el diseño del inventario se elige asumiendo que la replicación es
+gratis, se elige mal.
+
 ## Los dos patrones
 
 Todo el código de red del proyecto entra en uno de estos dos moldes. Si estás escribiendo
