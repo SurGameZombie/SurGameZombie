@@ -76,6 +76,10 @@ herramientas.
 - Preferir señales sobre acoplamiento directo entre nodos.
 - Nada de `get_node("../../..")`. Usar `@export` o señales.
 - Si una función pasa las 30 líneas, partirla.
+- **Input map: movimiento por `physical_keycode`, atajos de UI por `keycode`.** El
+  movimiento va por posición física de la tecla, así que en un teclado AZERTY o QWERTZ
+  caen las mismas cuatro teclas bajo los dedos. Los atajos por letra (`I` = inventario)
+  van por `keycode`, para que la tecla que dice I sea la que abre el inventario.
 
 ## Datos como Resources
 

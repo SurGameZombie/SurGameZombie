@@ -128,6 +128,26 @@ que escribamos la primera vez. Pero el riesgo declarado de este proyecto es perd
 con el propio código (ver "Riesgos identificados"), y el controller del jugador es
 justamente el archivo que no nos podemos permitir tratar como caja negra.
 
+### Input map: movimiento por `physical_keycode`, atajos de UI por `keycode`
+
+`keycode` sigue el **layout** del teclado; `physical_keycode` sigue la **posición física**
+de la tecla. En un AZERTY francés, un WASD bindeado por `keycode` cae en cuatro teclas
+desparramadas; bindeado por posición física, el francés aprieta las mismas cuatro teclas
+que nosotros aunque le impriman ZQSD.
+
+La convención, en `CLAUDE.md` → "Reglas de código":
+
+- **Movimiento → `physical_keycode`.** La mano va a una posición, no a una letra.
+- **Atajos de UI → `keycode`.** Que la tecla que dice I sea la que abre el inventario.
+
+Hoy no cambia nada: las dos máquinas son QWERTY. Se decide igual porque cambiarlo después
+es tocar cada binding a mano y nadie se acuerda de por qué estaba así.
+
+**Ojo con el MCP:** `input_map_manage` **solo puede bindear por `keycode`.** No expone
+`physical_keycode` ni `InputEventKey.location` (el que distingue Shift izquierdo de
+derecho). Los bindings de movimiento hay que escribirlos a mano en `project.godot` o
+cargarlos por el diálogo de Input Map del editor, tildando *Physical*.
+
 ### Assets: CC0 gratis, una sola familia visual
 
 Kenney + KayKit como base, Quaternius para animaciones y personajes. La coherencia visual
