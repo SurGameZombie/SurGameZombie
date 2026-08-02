@@ -123,6 +123,7 @@ Un arma melee + un arma de fuego con munición escasa. Sistema de spawn/densidad
 
 **v0.6 — "Se ve"**
 Pasada de arte sobre el greybox. Familia visual definida y aplicada, iluminación, post-processing, SFX.
+*Sacar acá:* la caja de referencia de escala de 1 m³ que está en `world.tscn` desde v0.1 para tener con qué comparar la altura del jugador.
 *Por qué es un milestone propio y no el final de v1.0:* es el único bloque de trabajo del proyecto que no toca sistemas. Mezclado con lobby y menús, lo primero que se recorta cuando aparece un bug de red es el arte, y el juego termina siendo un greybox con menú. Separado, se puede jugar v0.6 y decir "ya se ve como el juego que queríamos" antes de tocar nada de conectividad.
 
 **v1.0 — "Se juega con amigos"**

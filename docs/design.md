@@ -112,8 +112,11 @@ inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
 |---|---|
 | Escala del mundo | 1 unidad de Godot = 1 metro |
 | Altura del jugador | 1.8 m |
+| Radio de la cápsula del jugador | 0.4 m |
+| Altura de la cámara | 1.65 m |
 | Velocidad de caminata | 4 m/s |
 | Velocidad de corrida | 7 m/s |
+| Control en el aire | 0.25 |
 | Capacidad de carga sin mochila | 25 kg |
 | Capacidad de carga con mochila | 40 kg |
 | Tamaño del mapa terminado | 250 × 250 m |
@@ -122,11 +125,14 @@ La escala en metros no es cosmética: hace que las físicas de Godot (gravedad, 
 fricción) den valores realistas sin tener que compensar, y es la referencia contra la que
 se ajusta la escala de los assets al importarlos.
 
-Dos notas de implementación, para la v0.1:
+Notas de implementación, para la v0.1:
 
 - **1.8 m es la altura del cuerpo**, no la de la cámara. En primera persona la cámara va a
-  la altura de los ojos, un poco más abajo (~1.6-1.7 m). Si se pone a 1.8 se siente como
-  flotar.
+  la altura de los ojos, un poco más abajo: quedó fijada en **1.65 m**. Si se pone a 1.8
+  se siente como flotar.
+- **El radio de 0.4 m** es el ancho de una persona. Define por dónde pasás: un pasillo de
+  menos de 0.8 m no se puede cruzar, y es el número contra el que hay que dimensionar
+  puertas e interiores cuando se greyboxee el complejo.
 - **250 × 250 m** es el mapa terminado, no el de v0.1 (ver `docs/plan.md` →
   "Progresión del mapa"). A 4 m/s cruzarlo de punta a punta lleva poco más de un minuto:
   vacío sería chiquísimo, pero con loot, interiores y zombies alcanza para la sesión de
@@ -136,6 +142,26 @@ Dos notas de implementación, para la v0.1:
   que la vida real, que es lo normal en juegos porque la velocidad realista se siente
   lentísima. Si el juego tiene que sentirse pesado y torpe, es de acá de donde hay que
   bajar.
+
+### Control en el aire: 0.25
+
+Valor de arranque, salido del primer playtest del controller.
+
+Es cuánto podés corregir la dirección mientras estás en el aire, medido como **fracción de
+tu velocidad por segundo**. En **0.0** la trayectoria del salto queda fija desde que
+despegás y no la podés tocar. En **1.0** podés cambiar la velocidad entera en un segundo,
+que para un salto de ~0.9 s es prácticamente control total: así estaba antes del playtest
+y se sentía a volar.
+
+En 0.25, caminando a 4 m/s, podés corregir como mucho ~0.9 m/s en todo el salto. Alcanza
+para acomodar un aterrizaje, no para cambiar de idea a mitad de camino.
+
+**Por qué bajo:** en un survival el salto sirve para pasar un obstáculo, no para pelear ni
+esquivar. Poco control en el aire obliga a decidir **antes** de saltar, y eso es lo que
+hace que el movimiento se sienta con peso. Los shooters de movimiento rápido hacen lo
+contrario a propósito, y no es el juego que estamos haciendo.
+
+Es la primera decisión de game feel del proyecto que salió de jugarlo y no de razonarlo.
 
 ## Los primeros 10 items
 
