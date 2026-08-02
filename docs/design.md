@@ -96,3 +96,5 @@ La regla que lo reemplaza:
 - Avisarse antes de empezar a trabajar, y decir sobre qué archivos o carpetas.
 - Nunca dos personas sobre el mismo archivo al mismo tiempo.
 - `git pull` antes de arrancar, siempre.
+
+Última revisión: 2/8/2026
