@@ -11,7 +11,8 @@ alguien va a necesitar recordar en dos meses.
 
 **v0.1 está desbloqueada.** Las tres decisiones que faltaban para poder escribir el primer
 código —modelo de autoridad, primera o tercera persona, idioma del código— están tomadas.
-Cómo se resuelve v0.1 concretamente está escrito en `docs/netcode.md`.
+Cómo se resuelven v0.1 **y v0.2** —paso a paso, con las dependencias marcadas— está escrito
+en `docs/netcode.md`.
 
 **Pendiente antes de escribir código:** tutorial oficial 3D de Godot, los dos.
 Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
@@ -227,12 +228,23 @@ no un feature que se agrega.
 ## Pendiente
 
 - [ ] Tutorial oficial 3D de Godot, los dos por separado
-- [ ] Completar los `[DECIDIR]` de `docs/design.md`: nombre, ambientación, qué pasa al
-      morir, condición de victoria, primeros 10 items. **"Qué pasa al morir" bloquea v0.2**,
-      el resto puede esperar
+- [ ] **Huecos de diseño abiertos.** Ninguno bloquea v0.1 ni v0.2:
+      1. Si el inventario de v0.3 usa `expressobits/inventory-system` o se escribe. Se
+         responde **en v0.3**, verificando si el addon replica en red solo o si hay que
+         serializar a `PackedByteArray` igual
+      2. **Vendas:** falta decidir si la vida se regenera sola o solo con items. Hasta que
+         eso esté, las vendas no tienen dónde enchufarse
+      3. **Palanca:** no hay puertas ni contenedores trabados en el plan, así que no hay
+         mecánica que la use
+      4. **Qué entra al save**, tres cosas sin decidir (items tirados en el piso,
+         inventario y stats de los jugadores, zombies). Se deciden **antes** de escribir
+         el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
+         `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
 - [ ] Instalar gdUnit4 — el AssetLib falla (ver "Problemas"). Probar el `.zip` de GitHub
-- [ ] Bajar los packs de assets y decidir la familia visual
+- [ ] Bajar los packs de assets y decidir la familia visual. **Se puede hacer en paralelo
+      desde v0.3**, en los ratos sin código: no bloquea hasta v0.6, pero llegar a v0.6 con
+      la familia ya elegida convierte esa pasada de arte en aplicar decisiones, no tomarlas
 - [ ] Dibujar el mapa en papel
 - [ ] **Playtest de quince minutos sin código a la vista, por cada milestone.** Jugarlo,
       no revisarlo. Es la versión barata del "testigo independiente": el sesgo de
@@ -292,3 +304,162 @@ advertencia de que el `MultiplayerSynchronizer` **no** sincroniza el inventario 
 firma vieja `connect("pressed", self, "_on_x")` no "compila y no hace nada". Con tipado
 estático es error de parseo y el script no carga; solo sobre un `Variant` llega a runtime
 y deja la señal muerta en silencio. El static typing obligatorio previene el caso malo.
+
+**[2/8/2026]** — Auditoría del plan y decisiones de scope del mapa. Sin código.
+
+**v0.1 es una caja con piso y paredes**, no "una manzana": `plan.md` §3 decía una cosa y
+`design.md`, `netcode.md` y el propio `plan.md` §6 decían otra. Gana la caja porque v0.1 es
+el filtro y un filtro tiene que costar horas — un mapa hecho a mano arrastra ambientación,
+packs y familia visual, y entonces deja de medir el esqueleto de red.
+
+**El mapa pasa a tener progresión propia** (`plan.md` §3 → "Progresión del mapa"): greybox
+primero, arte al final. Caja en v0.1, greybox mínimo en v0.2 para que el NavMesh tenga qué
+navegar, el greybox crece en v0.3-v0.5, y la pasada de arte recién en v1.0. **Consecuencia:
+la familia visual no bloquea nada hasta v1.0.** Tamaño del mapa de v1.0: **250 × 250 m**,
+valor de arranque a tunear, en `design.md`.
+
+**"Qué pasa al morir" se partió en dos decisiones:** respawn y revivir bloquean v0.2; qué
+pasa con el inventario al morir bloquea v0.3, porque hasta v0.3 no hay inventario que
+perder. Antes era un solo `[DECIDIR]` atado a v0.2 y no se podía cerrar.
+
+**El addon de inventario de expressobits queda registrado como pregunta abierta**, no como
+decisión tomada: `plan.md` afirmaba que es multiplayer-friendly y `netcode.md` advierte que
+el `MultiplayerSynchronizer` no replica estructuras anidadas. Se decide en v0.3 verificando
+si el addon replica solo o si hay que serializar a `PackedByteArray` igual.
+
+Además se arreglaron cuatro desalineaciones entre docs: el encabezado de `plan.md` §2 y el
+ejemplo de rule de §5 seguían diciendo "autoridad total del host"; la estructura de carpetas
+estaba escrita tres veces y ninguna coincidía —ahora la única versión está en `CLAUDE.md` y
+`plan.md` apunta ahí—; `plan.md` §5 describía el loop de verificación como cerrado cuando
+gdUnit4 no está instalado; y las referencias de tono de `plan.md` no incluían DayZ ni Road
+to Vostok.
+
+**[2/8/2026]** — **Se cerraron todos los huecos de diseño menos uno.** Está todo en
+`docs/design.md`; acá va solo lo que tiene consecuencia sobre el plan.
+
+**Nombre: SurGameZombie**, provisorio. **Ambientación: un complejo industrial** —fábrica,
+depósitos, oficinas, playa de camiones—, elegida contra el tamaño del mapa: 250 × 250 m
+son unas 2 × 2 manzanas y un pueblo no entra. **No hay condición de victoria:**
+supervivencia infinita.
+
+**Muerte, en dos etapas.** En v0.2 quedás **caído**, no muerto: un compañero puede
+levantarte y si nadie llega en 60 segundos morís de verdad y respawneás cerca. En v0.3 la
+muerte real deja el inventario en una **bolsa** que solo saquean jugadores, que no
+despawnea por tiempo y desaparece al quedar vacía.
+
+**El mundo persiste** —los contenedores vaciados siguen vacíos, el mapa no se resetea—, y
+eso **convierte el guardado de v0.5 en obligatorio**: sin guardado, la persistencia dura
+lo que dura la sesión del host.
+
+**Inventario limitado por peso**, no por slots ni por grid. Se descartó el grid tipo
+Tarkov: duplica el trabajo de UI y empeora la serialización de red, porque cada item pasa
+a guardar posición y rotación además de cantidad. Migrar después es reescribir la UI de
+inventario entera.
+
+**Los primeros 10 items:** bate, pistola 9mm, munición 9mm, botella de agua, lata de
+comida, barra de cereal, vendas, linterna, mochila, palanca. Un solo melee y una sola arma
+de fuego, consistente con v0.5. **Escopeta y fusil quedan para v0.6 en adelante**, porque
+con tres armas de fuego en diez items el combate deja de ser escaso.
+
+**Queda un solo hueco:** si el inventario de v0.3 usa el addon de expressobits o se
+escribe. **v0.2 no tiene ninguna decisión de diseño pendiente.**
+
+**[2/8/2026]** — Consecuencias de las decisiones de diseño de arriba, resueltas una por
+una. Sin código. Lo que tiene efecto de acá en adelante:
+
+**El estado caído no reasigna autoridad de red.** El cuerpo del jugador sigue siendo del
+peer dueño incluso caído: el host decide que caíste, el cliente lee el flag y deja de leer
+input. Le confiamos al cliente que respete su propio flag. *Rejected: pasarle la autoridad
+del cuerpo al host mientras dura el caído | toca el `MultiplayerSynchronizer` en caliente,
+que da bugs difíciles, y del otro lado no hay PvP que defender.* En `docs/netcode.md` y en
+`.claude/rules/netcode.md`. **Regla general que sale de acá: la autoridad no se reasigna en
+runtime, nunca.**
+
+**El patrón del modificador, con nombre porque se va a repetir:** el host calcula el
+modificador de velocidad y lo replica, el cliente lo multiplica al moverse, el cliente
+nunca lo calcula. Ya aplica a la stamina (v0.4); el sobrepeso (v0.3) es el segundo caso y
+heridas y temperatura entrarían igual.
+
+**El save vive en la máquina de quien hostea: si hostea el otro, es otro mundo.** Aceptado
+por simple. Si molesta, la solución es que hostee siempre el mismo, no sincronizar saves.
+Consecuencia que hay que aplicar dos milestones antes de que se note: **los contenedores
+llevan un ID persistente propio (`@export var container_id: String`), no `NodePath`**,
+porque el save de v0.5 los busca por ese ID y mover o renombrar un nodo cambia su ruta.
+Anotado en v0.3 y en v0.5.
+
+**Slots de equipo: mochila y arma en mano, solo esos dos.** No contradice el inventario
+por peso: el peso limita qué cargás, los slots definen qué tenés puesto. **Capacidad: 25 kg
+sin mochila, 40 con.** Al pasarte caminás más lento y no podés correr — sin bloqueo duro.
+Valores de arranque.
+
+**Tabla item → mecánica → milestone** en `docs/design.md`. Lo que deja claro: **en v0.3 los
+diez items entran, pero solo la mochila hace algo.** Vendas, linterna y palanca son items
+inertes ahí y es a propósito — v0.3 prueba el inventario, no las mecánicas. Aparecieron dos
+huecos de diseño nuevos, los dos sin bloquear nada: cuándo curan las vendas (depende de si
+la vida se regenera sola, que no está decidido) y qué abre la palanca (no hay mecánica de
+acceso trabado en el plan).
+
+**v1.0 se partió en dos.** Tenía arte, sonido, lobby, menús y mapa final juntos: más
+trabajo que v0.1 a v0.5 sumadas, y un milestone que no se puede terminar no ordena nada.
+Queda **v0.6 "Se ve"** (pasada de arte, familia visual, iluminación, post-processing, SFX)
+y **v1.0 "Se juega con amigos"** (noray, lobby, menús, nombre definitivo, balance final).
+La pasada de arte va sola porque es el único bloque que no toca sistemas: mezclada con
+netcode, es lo primero que se recorta cuando aparece un bug. **La familia visual y los SFX
+se pueden ir haciendo en paralelo desde v0.3**, aunque no bloqueen hasta v0.6.
+
+Efecto colateral de partir v1.0: la entrada anterior decía "escopeta y fusil quedan para
+v0.6 en adelante", escrito cuando v0.6 no era un milestone definido. Ahora v0.6 es la
+pasada de arte, así que en `docs/design.md` quedó como **"fuera de la v1"**, que era la
+intención. `docs/decisions/0004-plan-de-transporte.md` dice "Ahora → v0.5" por el mismo
+motivo; **no se toca, las ADRs son inmutables** (`docs/proceso.md` §2). Se lee bien igual:
+ENet sigue hasta que entre noray en v1.0.
+
+**[2/8/2026]** — Cierre de la misma sesión: **v0.2 queda planificada de punta a punta** y
+se escribió **ADR-0007**. Sin código.
+
+**ADR-0007: la autoridad de red no se reasigna en runtime, nunca.** Generaliza lo del
+estado caído: `set_multiplayer_authority()` se llama en un solo lugar del proyecto —el
+host, al instanciar al jugador— y en ninguno más. Aplica de antemano a los estados que
+todavía no existen (vehículos, que un zombie te agarre): flag en el nodo de stats del host,
+replicado, y el cliente lo respeta saliendo temprano de `_physics_process`. Es un molde, no
+una decisión nueva cada vez. Queda atada a ADR-0003: las dos apoyan en que no hay nada que
+defender, y si algún día lo hay, se revisan juntas.
+
+**`docs/netcode.md` → "Cómo se resuelve v0.2"**, con el mismo formato que la de v0.1 y las
+dependencias marcadas. Lo que sale de ahí y no era evidente:
+
+- **v0.2 tiene dos RPCs del patrón 2, no uno.** El daño y `request_revive`. La validación
+  de distancia para levantar a alguien la hace el host contra las posiciones ya replicadas,
+  nunca contra una distancia que mande el cliente. El timer de 60 s también corre en el
+  host: en cada cliente, dos latencias distintas llegan a cero en momentos distintos.
+- **El NavMesh va antes que el zombie, no con el zombie.** Parece cosa de la IA, pero el
+  respawn "cerca de donde caíste" necesita validar que el punto sea navegable, así que
+  bloquea también el último paso del milestone. Dejarlo para cuando toque la IA traba el
+  final de v0.2 por algo que se podía hacer primero.
+- **El segundo `MultiplayerSynchronizer` es donde muerde la trampa de
+  `set_multiplayer_authority(id, recursive = true)`.** En v0.1 no se nota porque no hay
+  stats; en v0.2 la vida termina siendo del cliente y el host no puede aplicar daño.
+
+**Verificado por MCP contra el editor 4.7.1-stable**, porque estaba escrito de memoria y es
+justo el tipo de API que se alucina: `NavigationServer3D.map_get_closest_point(map: RID,
+to_point: Vector3) -> Vector3` existe con esa firma exacta, igual que
+`World3D.get_navigation_map() -> RID`, `map_get_random_point()` y `map_force_update()`.
+**Lo importante es lo que la firma implica:** devuelve `Vector3`, no `bool`, así que **no
+falla nunca** — siempre da el punto más cercano del NavMesh, esté a 10 cm o a 40 m.
+Validar "es navegable" es comparar la distancia contra el punto pedido. Sin eso, morir
+arriba de un techo te respawnea del otro lado del mapa. Eso último es inferencia de la
+firma, **no verificado corriendo**: cuando se implemente, probarlo muriendo a propósito en
+un lugar sin NavMesh.
+
+**La bolsa de muerte es una entidad de red, no un item, y es la pieza más cara de v0.3.**
+En el diseño ocupa dos renglones y arrastra: `MultiplayerSpawner`, un inventario entero
+serializado (el mismo problema del `PackedByteArray`), RPC del patrón 2 para sacar cosas,
+chequeo de vacío en el host cada vez que alguien saca algo, e ID persistente porque **entra
+al save de v0.5**: una bolsa que nadie vació tiene que seguir ahí después de cerrar el
+juego. Si en v0.3 se hace como algo que vive solo en memoria, v0.5 la reescribe entera.
+
+**`docs/netcode.md` estrena "Qué entra al save"**, lista viva: contenedores, bolsas de
+muerte y hora del día. Quedaron tres cosas **sin registrar** que hay que decidir antes de
+escribir el save, no después: si los items tirados en el piso sobreviven al cierre, si el
+inventario y las stats de cada jugador persisten entre sesiones —y qué pasa con el de
+alguien que no está conectado cuando el host guarda—, y si los zombies entran o no.

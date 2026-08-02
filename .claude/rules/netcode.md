@@ -44,6 +44,11 @@ de formas que no se ven hasta que hay tres jugadores conectados.
   acepta; "le pegué a este zombie" o "agarré esto" se valida contra el estado del host.
 - La creación del `MultiplayerPeer` vive solo en `scripts/net/network_manager.gd`.
   Ningún otro archivo debe saber si el transporte es ENet, Steam o noray.
+- **La autoridad no se reasigna en runtime.** El cuerpo del jugador es del peer dueño
+  siempre, incluso caído o muerto. Nada de `set_multiplayer_authority()` fuera del momento
+  en que el host instancia al jugador.
+- Lo que el save tiene que volver a encontrar (contenedores, puertas, spawns) se
+  identifica por un **ID propio y estable**, no por `NodePath`. Los RPC también mandan ID.
 
 ## Antes de escribir cualquier función que cambie estado
 
@@ -70,6 +75,22 @@ func request_pickup(item_id: String) -> void:
 ```
 
 Si lo que estás escribiendo no entra en ninguno de los dos, preguntá antes de seguir.
+
+## Donde se tocan: el modificador de velocidad
+
+Estado del host que se consume dentro del movimiento del cliente. Aplica a stamina (v0.4),
+sobrepeso (v0.3) y a todo lo que venga después que cambie cuánto corrés.
+
+> El host calcula el modificador y lo replica. El cliente lo recibe y lo multiplica por su
+> velocidad. **El cliente nunca calcula el modificador.**
+
+```gdscript
+# El nodo de stats (host) expone el número; el jugador (cliente dueño) lo usa.
+var speed: float = base_speed * stats.speed_multiplier
+```
+
+Mismo molde para el estado caído: el host decide que estás caído, el cliente lee el flag y
+deja de leer input. No se le saca la autoridad del cuerpo.
 
 ## Sincronización
 

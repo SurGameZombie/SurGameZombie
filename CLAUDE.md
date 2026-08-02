@@ -43,10 +43,11 @@ Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
 & $godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --run-tests
 ```
 
-## Estructura
+## Estructura (única versión — `docs/plan.md` §5 apunta acá, no la repite)
 
 - `scenes/` — escenas `.tscn` por sistema: `main/`, `player/`, `enemies/`, `items/`
-- `scripts/` — lógica por sistema: `net/`, `survival/`, `inventory/`, `combat/`, `world/`
+- `scripts/` — lógica por sistema: `net/`, `player/`, `enemies/`, `combat/`, `survival/`,
+  `inventory/`, `world/`, `ui/`
 - `resources/` — datos como `.tres`: items, tipos de zombie, loot tables
 - `assets/` — `models/` (.glb), `textures/`, `audio/`
 - `tests/` — suites de gdUnit4

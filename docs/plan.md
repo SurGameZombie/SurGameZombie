@@ -1,6 +1,6 @@
 # Plan de proyecto — Zombie survival co-op
 
-**Contexto:** dos personas, saben programar, cero experiencia en gamedev. Co-op 2-4 jugadores, uno hostea. Hobby sin plazo. Referencia visual/tonal: SurrounDead. Herramienta principal: Claude Code.
+**Contexto:** dos personas, saben programar, cero experiencia en gamedev. Co-op 2-4 jugadores, uno hostea. Hobby sin plazo. Referencias de tono: SurrounDead, DayZ y Road to Vostok (las mismas que `docs/design.md`, que es la fuente de verdad del diseño). Herramienta principal: Claude Code.
 
 ---
 
@@ -53,11 +53,11 @@ Aunque vengan de otro lenguaje. Razones:
 
 ## 2. Arquitectura de red
 
-### Modelo: listen server con autoridad total del host
+### Modelo: listen server con autoridad dividida
 
 Un jugador corre el juego **y** la lógica de servidor en el mismo proceso. Los otros 1-3 se conectan como clientes.
 
-**La regla que define todo el proyecto, desde el commit 1:**
+**La regla original, del commit 1. Quedó revisada — leer la nota de abajo antes de aplicarla:**
 
 > El host es autoridad sobre todo el estado del juego. Los clientes mandan *input*. El host simula y replica *estado*.
 
@@ -78,7 +78,7 @@ No elijas una para siempre. Elegí una para *ahora* y aislá el cambio.
 
 | Opción | Costo | Qué resuelve | Cuándo |
 |---|---|---|---|
-| **ENetMultiplayerPeer** (built-in) | $0, cero deps | Conexión directa por IP. Anda en LAN sin configurar nada. Por internet el host tiene que abrir puerto en el router | v0.1 → v0.5. Para testear entre ustedes dos |
+| **ENetMultiplayerPeer** (built-in) | $0, cero deps | Conexión directa por IP. Anda en LAN sin configurar nada. Por internet el host tiene que abrir puerto en el router | v0.1 → v0.6. Para testear entre ustedes dos |
 | **netfox.noray** | $0, open source | NAT punchthrough + fallback a relay. Los amigos se conectan con un código, sin tocar el router. Hay instancia pública de prueba en `tomfol.io:8890` (sin garantía de uptime, no para producción) | Cuando quieran meter amigos que no van a hacer port forwarding |
 | **SteamMultiplayerPeer** (expressobits) + GodotSteam | $100 por App ID, recuperable a los USD 1.000 de revenue | Steam maneja NAT, lobbies, invitaciones por el overlay. Para desarrollo se usa el App ID 480 (Spacewar) gratis | Solo si el juego alguna vez apunta a Steam |
 
@@ -99,26 +99,51 @@ Dijiste "supervivencia realista" y también "primera versión simple". Están en
 ### Milestones — cada uno tiene que ser jugable
 
 **v0.1 — "Se mueve"** *(el milestone más importante de todos)*
-Un mapa chico hecho a mano (una manzana, no un mundo abierto). Character controller en primera persona. Host + 1 cliente conectados por IP en LAN, viéndose moverse en tiempo real. Sin zombies, sin items, sin nada.
+Una caja con piso y paredes. Character controller en primera persona. Host + 1 cliente conectados por IP en LAN, viéndose moverse en tiempo real. Sin zombies, sin items, sin nada.
 *Por qué primero:* prueba el esqueleto de red. Si esto no funciona limpio, nada de lo demás importa. Y si sale mal, descubrirlo acá cuesta un día, no tres meses.
+*Por qué una caja y no un mapa:* v0.1 es el filtro, y un filtro tiene que costar horas. Un mapa hecho a mano —aunque sea una manzana— arrastra ambientación, packs de assets y familia visual, o sea que deja de medir si el esqueleto de red funciona y pasa a medir cuánto tardamos en decidir cómo se ve el juego. **v0.1 no depende de ninguna decisión de arte.**
 
 **v0.2 — "Mata"**
-Un tipo de zombie. NavMesh para que persiga. Ataque cuerpo a cuerpo. Vida del jugador, muerte, respawn. Todo el daño resuelto en el host.
+Un tipo de zombie. NavMesh para que persiga. Ataque cuerpo a cuerpo. Vida del jugador, caído, revivir, muerte y respawn. Todo el daño resuelto en el host.
+*El orden interno del milestone está resuelto en `docs/netcode.md` → "Cómo se resuelve v0.2", con las dependencias marcadas.* La que no es obvia: **el NavMesh va antes que el zombie**, porque el respawn "cerca de donde caíste" también lo necesita para validar que el punto sea navegable.
 
 **v0.3 — "Se lootea"**
-Inventario replicado. ~10 items. Contenedores registrables (armarios, autos). Pickup y drop sincronizados.
-*Acá entra el addon de inventario de expressobits* — está hecho en C++ (GDExtension), es modular, separa la lógica de la UI, y ya es multiplayer-friendly. Ahorra semanas.
+Inventario replicado. ~10 items. Contenedores registrables (armarios, autos). Pickup y drop sincronizados. Capacidad por peso: 25 kg, 40 con la mochila equipada.
+*El addon de inventario de expressobits es candidato, no decisión tomada* — está hecho en C++ (GDExtension), es modular y separa la lógica de la UI. Que sea "multiplayer-friendly" **no está verificado** y es justo lo que hay que verificar: ver el hueco abierto en `docs/design.md` y la advertencia de `docs/netcode.md` sobre serializar el inventario a mano.
+**Los contenedores nacen con un ID persistente propio, no con `NodePath`** (`@export var container_id: String`). El save de v0.5 los va a buscar por ese ID, y renombrar o mover un nodo cambia su ruta en el árbol. Es dos milestones antes de que se note: si acá se usan node paths "porque todavía no hay save", en v0.5 hay que volver a tocar cada contenedor del mapa. Ver `docs/netcode.md` → "El mundo es del host".
+De los 10 items, en v0.3 solo la mochila hace algo; el resto entra inerte, a propósito (tabla en `docs/design.md`).
+**La bolsa de muerte entra acá y hay que presupuestarla aparte:** no es un item, es una entidad de red con spawner, inventario serializado y persistencia (ver `docs/netcode.md`). Es la pieza más cara del milestone.
 
 **v0.4 — "Duele"**
 Hambre y sed drenando con el tiempo. Comida y agua como items consumibles. Muerte por inanición. Stamina que se consume corriendo.
 
 **v0.5 — "Es un juego"**
 Un arma melee + un arma de fuego con munición escasa. Sistema de spawn/densidad de zombies. Ciclo día/noche. Guardado del estado del mundo en el host.
+**El save es un archivo en la máquina de quien hostea:** si hostea el otro, es otro mundo. Aceptado — ver `docs/netcode.md` → "El mundo es del host". Lee los contenedores por el ID persistente que se les puso en v0.3, no por node path.
+
+**v0.6 — "Se ve"**
+Pasada de arte sobre el greybox. Familia visual definida y aplicada, iluminación, post-processing, SFX.
+*Por qué es un milestone propio y no el final de v1.0:* es el único bloque de trabajo del proyecto que no toca sistemas. Mezclado con lobby y menús, lo primero que se recorta cuando aparece un bug de red es el arte, y el juego termina siendo un greybox con menú. Separado, se puede jugar v0.6 y decir "ya se ve como el juego que queríamos" antes de tocar nada de conectividad.
 
 **v1.0 — "Se juega con amigos"**
-Conectividad sin port forwarding (noray). Flujo de lobby: crear partida / unirse. Menús básicos. Sonido. Un mapa lo suficientemente grande para una sesión de 30-60 minutos.
+Conectividad sin port forwarding (noray). Flujo de lobby: crear partida / unirse. Menús. Nombre definitivo. Balance final sobre todo lo que hasta acá tuvo valores de arranque.
 
 Cada milestone se juega de punta a punta antes de pasar al siguiente. Si en v0.3 el inventario no es divertido de usar, no sigas a v0.4.
+
+**Por qué v1.0 se partió:** en la versión anterior de este plan, v1.0 tenía arte, sonido, lobby, menús y mapa final juntos — más trabajo que v0.1 a v0.5 sumadas. Un milestone que no se puede terminar deja de ordenar nada.
+
+### Progresión del mapa
+
+Construimos geometría gris primero (greybox), arte después.
+
+- **v0.1:** una caja. Piso, cuatro paredes, nada más.
+- **v0.2:** greybox mínimo. Paredes y obstáculos para que el NavMesh tenga qué navegar. Sin assets, todo cubos grises.
+- **v0.3-v0.5:** el greybox crece. Interiores donde poner contenedores, espacios que justifiquen la densidad de zombies.
+- **v0.6:** pasada de arte. Recién acá entran los assets encima del greybox.
+
+**Consecuencia:** la familia visual de assets no bloquea nada hasta v0.6, aunque se decida antes.
+
+**Pero no hay que esperar a v0.6 para empezarla.** Elegir la familia visual, bajar los packs, probar cómo se ven juntos en Godot y juntar SFX es trabajo que se puede hacer en paralelo desde v0.3, en los ratos en que no se está tocando código. No bloquea ningún milestone y llegar a v0.6 con la familia ya elegida y los assets ya importados convierte esa pasada de arte en aplicar decisiones tomadas en vez de tomarlas.
 
 ---
 
@@ -166,34 +191,7 @@ Esta es la parte que más rendimiento te va a dar y la que más gente se saltea.
 
 Organizada **por sistema, no por tipo de archivo**. Claude Code trabaja mucho mejor cuando todo lo de "inventario" está en una carpeta.
 
-```
-proyecto/
-├── CLAUDE.md                  # contexto siempre cargado (< 200 líneas)
-├── .claude/
-│   ├── rules/                 # constraints path-scoped
-│   ├── skills/                # procedimientos repetibles
-│   └── settings.json          # hooks
-├── docs/
-│   ├── design.md              # el GDD corto, una página
-│   ├── netcode.md             # reglas de autoridad y replicación
-│   └── decisions/             # ADRs: por qué se eligió cada cosa
-├── project.godot
-├── addons/                    # plugins de terceros — no tocar
-├── scenes/
-│   ├── main/                  # menú, lobby, mundo
-│   ├── player/
-│   ├── enemies/
-│   └── items/
-├── scripts/
-│   ├── net/                   # NetworkManager, autoridad, RPCs
-│   ├── survival/              # hambre, sed, stamina
-│   ├── inventory/
-│   ├── combat/
-│   └── world/                 # spawns, día/noche, loot
-├── resources/                 # .tres: definiciones de items, loot tables
-├── assets/                    # .glb, texturas, audio
-└── tests/                     # GUT o gdUnit4
-```
+**El árbol vive en `CLAUDE.md` → "Estructura", que es la única versión.** No se repite acá: estaba escrito en tres lugares distintos y los tres se habían desincronizado.
 
 ### Datos como Resources (`.tres`), no hardcodeados
 
@@ -207,7 +205,7 @@ Hay siete formas de instruir a Claude Code y cada una tiene un costo de contexto
 
 **`CLAUDE.md` en la raíz** — se carga al inicio de sesión y se queda toda la sesión. Va lo que Claude tiene que saber *siempre*: comandos de build y run, layout de directorios, convenciones de código, la regla de static typing, qué addons se usan y dónde está su documentación. Anthropic recomienda mantenerlo **bajo 200 líneas** y tratarlo como un índice que apunta a otros archivos, no como un volcado. Cada línea cuesta tokens en cada sesión, sea relevante o no.
 
-**Rules path-scoped en `.claude/rules/`** — constraints que solo aplican a ciertas carpetas. Ejemplo concreto para este proyecto:
+**Rules path-scoped en `.claude/rules/`** — constraints que solo aplican a ciertas carpetas. La versión real y completa de esta regla está en `.claude/rules/netcode.md`; acá va recortada como ejemplo del formato:
 
 ```yaml
 ---
@@ -215,9 +213,10 @@ paths:
   - "scripts/net/**"
   - "scripts/combat/**"
 ---
-Todo cambio de estado se resuelve en el host. Los clientes solo mandan input
-vía @rpc("any_peer", "call_local", "reliable"). Nunca modificar salud,
-inventario o posición de otro peer desde un cliente.
+El cuerpo del propio jugador es autoridad del peer dueño. Todo el resto del
+estado es autoridad del host: los clientes mandan intención vía
+@rpc("any_peer", "call_local", "reliable") y el host valida, aplica y replica.
+Un cliente nunca modifica salud, inventario ni la posición de otro peer.
 ```
 
 Una regla scopeada a `scripts/net/**` no ocupa contexto cuando estás trabajando en la UI.
@@ -233,6 +232,12 @@ Regla mental: si escribís "siempre que X, hacé Y" en `CLAUDE.md`, probablement
 Este es el punto crítico. Por default, **Claude Code edita archivos pero no puede apretar play y leer el error de runtime** — te entrega código y vos encontrás el bug. Dos cosas cierran ese loop:
 
 **a) Tests headless con GUT o gdUnit4.** Los dos corren desde línea de comandos con `godot --headless`, y gdUnit4 genera reportes JUnit XML/HTML e integra con GitHub Actions (soporta hasta 4.7.x). Claude Code corre los tests y lee pass/fail estructurado.
+
+> **[Estado real: esta mitad del loop NO está cerrada.]** gdUnit4 todavía no se pudo
+> instalar —el AssetLib falla, ver `docs/bitacora.md` → "Problemas que ya nos pasaron"—
+> así que hoy no hay tests headless y el comando de tests de `CLAUDE.md` no corre. La
+> única verificación real del proyecto es el MCP server más jugarlo nosotros. Mientras
+> siga así, todo lo que se entregue queda sin cubrir por (a).
 
 Qué testear: **la lógica pura**, no el rendering. Matemática de inventario (stacking, capacidad, split), decay de hambre, cálculo de daño, loot tables, serialización del save. Eso es donde viven los bugs sutiles y es donde los tests pagan.
 
