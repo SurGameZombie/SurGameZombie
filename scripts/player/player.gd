@@ -42,11 +42,14 @@ extends CharacterBody3D
 # necesita saber quién manda cuando entra al árbol.
 #
 # recursive es true por default y acá eso es lo que queremos: el Synchronizer
-# tiene que tener la misma autoridad que la raíz para que el transform fluya
-# cliente -> host -> resto.
-# OJO EN v0.2: cuando entre el nodo de stats (vida, hambre), ese tiene que
-# quedar en el host, y esta llamada se lo va a llevar al cliente. Ahí hay que
-# reasignarlo explícitamente (docs/netcode.md → "Paso 2: el segundo Synchronizer").
+# del transform tiene que tener la misma autoridad que la raíz para que el
+# transform fluya cliente -> host -> resto.
+#
+# Pero recursive también arrastra el nodo Stats, que es estado del host y no
+# puede terminar en el cliente. Eso lo arregla player_stats.gd, que se vuelve a
+# asignar al host en SU propio _enter_tree(): como _enter_tree() va de padre a
+# hijo, esa llamada corre después que esta y gana
+# (docs/netcode.md → "Paso 2: el segundo Synchronizer").
 func _enter_tree() -> void:
 	set_multiplayer_authority(name.to_int())
 

@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://bej433us6ddor"]
+[gd_scene load_steps=10 format=3 uid="uid://bej433us6ddor"]
 
 [ext_resource type="Script" uid="uid://b0gxg04apicfw" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player/player_stats.gd" id="2_stats"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -27,6 +28,11 @@ properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_stats"]
+properties/0/path = NodePath(".:health")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_player")
 
@@ -51,3 +57,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_player")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("2_stats")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Stats"]
+replication_config = SubResource("SceneReplicationConfig_stats")
