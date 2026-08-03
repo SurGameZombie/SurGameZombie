@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/world.gd" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/main/yard.tscn" id="3_yard"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -9,9 +10,6 @@ background_color = Color(0.35, 0.38, 0.42, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.6, 0.64, 0.7, 1)
 ambient_light_energy = 0.5
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_grey"]
-albedo_color = Color(0.55, 0.55, 0.55, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dtyxf"]
 albedo_color = Color(0.45, 0.45, 0.45, 1)
@@ -26,35 +24,7 @@ environment = SubResource("Environment_world")
 transform = Transform3D(0.86602503, 0.38302216, -0.32139376, 0, 0.6427876, 0.76604426, 0.4999998, -0.6634138, 0.5566703, 0, 6, 0)
 shadow_enabled = true
 
-[node name="Floor" type="CSGBox3D" parent="." unique_id=1099599929]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
-use_collision = true
-size = Vector3(20, 0.5, 20)
-material = SubResource("StandardMaterial3D_grey")
-
-[node name="WallNorth" type="CSGBox3D" parent="." unique_id=2145388687]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -10.25)
-use_collision = true
-size = Vector3(21, 3, 0.5)
-material = SubResource("StandardMaterial3D_grey")
-
-[node name="WallSouth" type="CSGBox3D" parent="." unique_id=1672247763]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 10.25)
-use_collision = true
-size = Vector3(21, 3, 0.5)
-material = SubResource("StandardMaterial3D_grey")
-
-[node name="WallEast" type="CSGBox3D" parent="." unique_id=417590607]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.25, 1.5, 0)
-use_collision = true
-size = Vector3(0.5, 3, 20)
-material = SubResource("StandardMaterial3D_grey")
-
-[node name="WallWest" type="CSGBox3D" parent="." unique_id=534269327]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 1.5, 0)
-use_collision = true
-size = Vector3(0.5, 3, 20)
-material = SubResource("StandardMaterial3D_grey")
+[node name="Yard" parent="." unique_id=1099599929 instance=ExtResource("3_yard")]
 
 [node name="Players" type="Node3D" parent="." unique_id=1394061164]
 

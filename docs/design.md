@@ -22,6 +22,22 @@ Por qué: 250 × 250 m son unas 2 × 2 manzanas, así que "pueblo" no entra. Un 
 lo más fácil de greyboxear, justifica interiores densos y encaja con el loot elegido
 (palanca, llaves, bidones).
 
+**El greybox de v0.2 es un patio de 60 × 60 m**: un depósito con columnas, un bloque de
+oficinas, una playa de camiones con contenedores y un patio abierto. No es el mapa final —
+es el pedazo mínimo donde una persecución significa algo. Las medidas que fija están abajo
+y son contra las que se dimensiona el resto del complejo cuando crezca.
+
+Tres criterios de diseño que salieron de armarlo, y que valen para todo el mapa:
+
+- **Cada edificio tiene al menos dos aberturas.** Un edificio con una sola puerta no es un
+  espacio, es una trampa mortal sin decisión: entrás y ya perdiste. Los loops son lo que
+  hace que huir sea jugar.
+- **Los callejones sin salida son salas, no edificios.** Se cuelgan de un pasillo que sí
+  tiene salida, así que meterte en uno es una decisión mala tuya y no del mapa.
+- **La cobertura sin paredes vale tanto como las paredes.** Los contenedores cortan la
+  línea de visión sin cerrar el espacio, y son lo que permite perder de vista a algo que te
+  persigue.
+
 ## Qué NO es
 
 - No es mundo abierto. Un mapa cerrado y denso, de sesión de 30-60 minutos.
@@ -119,6 +135,12 @@ inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
 | Control en el aire | 0.25 |
 | Capacidad de carga sin mochila | 25 kg |
 | Capacidad de carga con mochila | 40 kg |
+| Greybox de v0.2 | 60 × 60 m |
+| Ancho de puerta industrial | 2.0 m |
+| Ancho de puerta interior | 1.4 m |
+| Contenedor de carga | 2.4 × 6 × 2.6 m |
+| Alto de nave industrial | 6 m |
+| Alto de oficina y muro perimetral | 3 m |
 | Tamaño del mapa terminado | 250 × 250 m |
 
 La escala en metros no es cosmética: hace que las físicas de Godot (gravedad, masas,
