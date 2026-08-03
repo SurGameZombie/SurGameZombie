@@ -253,6 +253,26 @@ map, capas de física), es la forma más fácil de pisarle el trabajo al otro.
 → **Regla permanente: si `project.godot` cambió por git, "Reload from disk". Lo más seguro
 es cerrar el editor antes de hacer `git pull`.**
 
+**Decenas de errores de "Unable to create shader cache directory" al correr dos
+instancias.** Salen en el Debugger apenas arrancan las dos, con la forma
+`Unable to create shader cache directory <AlgoShaderRD>/<hash> at user://shader_cache`
+(`servers/rendering/renderer_rd/shader_rd.cpp:1053` y `:1063`). **Es inofensivo y no es
+código nuestro.**
+
+Las dos instancias comparten el mismo `user://` —sale del nombre del proyecto, no de la
+instancia— y arrancan juntas, así que las dos intentan crear los mismos subdirectorios de
+caché de shaders al mismo tiempo. Una gana el `make_dir` y la otra loguea el error. La que
+pierde compila el shader igual: lo único que no hace es guardarlo en caché esa corrida.
+No se corrompe nada.
+
+Verificado reproduciéndolo, no razonándolo: con la caché tibia no aparece nunca, ni con
+una instancia ni con dos. Borrando `user://shader_cache` y largando dos juntas, aparece.
+La cantidad cambia en cada corrida (vimos 28 y 6) porque depende de cuántos shaders
+alcance a inicializar la perdedora antes de que la otra termine de crear los directorios.
+
+→ **No hay nada que arreglar.** Si molesta el ruido, correr una instancia sola una vez
+antes del playtest deja la caché armada y los errores no vuelven a aparecer.
+
 ---
 
 ## Riesgos identificados
