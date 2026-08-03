@@ -9,6 +9,13 @@ extends SceneTree
 ##
 ## Cómo se corre: ver CLAUDE.md → Comandos.
 ## Sale con código 1 si algo falló, así que sirve para un hook.
+##
+## Tira SIEMPRE un WARNING de "had to parse RenderingServer meshes at runtime".
+## Es esperado y no es un problema: avisa que transferir mallas de la GPU a la
+## CPU bloquea el render, y acá corremos headless sin render. Con geometría CSG
+## no se puede evitar — probado que Godot la parsea como malla aunque el
+## NavigationMesh diga "Static Colliders". Cualquier OTRO warning sí hay que
+## mirarlo.
 
 const SCENE_PATH: String = "res://scenes/main/yard.tscn"
 const OUTPUT_PATH: String = "res://scenes/main/yard_navmesh.tres"
