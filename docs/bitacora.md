@@ -14,6 +14,10 @@ código —modelo de autoridad, primera o tercera persona, idioma del código—
 Cómo se resuelven v0.1 **y v0.2** —paso a paso, con las dependencias marcadas— está escrito
 en `docs/netcode.md`.
 
+**v0.1 está escrita y falta jugarla.** Red, character controller y mundo están conectados;
+lo que falta es el playtest de host + cliente en dos instancias, que es el criterio de
+terminado real (`docs/netcode.md`).
+
 **Pendiente antes de escribir código:** tutorial oficial 3D de Godot, los dos.
 Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
 
@@ -223,6 +227,20 @@ distinguir "el código está mal" de "el editor no lo ve", correrlo en un proces
 bien. Ese comando ahora sirve porque ya existe `run/main_scene`; la advertencia de
 `CLAUDE.md` sobre `--quit` era de cuando no estaba definida.
 
+**El editor cachea escenas y `force_reload` del MCP no siempre las suelta.** Después de
+editar `world.tscn` a mano en disco, el editor abierto seguía sirviendo el árbol viejo por
+`scene_get_hierarchy`, incluso pidiendo `scene_open(force_reload = true)` y saltando a otra
+escena y volviendo. El archivo en disco estaba bien.
+
+Es el mismo problema que el autoload y que `project.godot`, con otra cara: **el editor
+abierto es una copia en memoria, no una vista del disco.** El riesgo real no es la lectura
+vieja sino que el editor guarde y pise el archivo.
+
+→ **Regla permanente: si se editó un `.tscn` a mano con el editor abierto, reiniciarlo antes
+de tocar esa escena en el editor.** Para verificar mientras tanto, correrlo en proceso
+limpio: `& $godot --headless --path . res://ruta/a/escena.tscn --quit-after 90`. Eso lee de
+disco y ejecuta los `_ready()`, así que sirve de smoke test real.
+
 **Godot pisa los cambios que git hace en `project.godot`.** Si un `git pull` modifica
 `project.godot` con el editor abierto, Godot detecta el cambio externo y pregunta qué
 hacer. Hay que elegir **"Reload from disk"**.
@@ -294,6 +312,46 @@ no un feature que se agrega.
 ---
 
 ## Registro
+
+**[2/8/2026]** — **Primer código del proyecto.** Entraron el esqueleto de red
+(`network_manager.gd` como autoload + `lobby.tscn`), el input map, el character controller
+en primera persona y `world.tscn`, y después se conectaron entre sí. **v0.1 queda cerrada a
+falta del playtest de dos instancias.**
+
+Lo que hay que recordar de acá:
+
+**v0.1 sí tiene un RPC, y `docs/netcode.md` decía que no.** Ya está corregido allá con el
+porqué completo. En resumen: el host spawnearía al cliente al recibir `peer_connected`,
+pero del lado del cliente `change_scene_to_file()` se difiere al final del frame, y **en LAN
+el RTT es menor a 1 ms contra un frame de 16 ms**. El paquete de spawn llegaba antes de que
+existiera el `MultiplayerSpawner` del otro lado. Se resolvió con un handshake: el cliente
+manda `notify_world_ready.rpc_id(1)` y el host spawnea al recibirlo.
+
+**Es el primer caso del patrón general:** cargar una escena no es instantáneo, así que nada
+que dependa de que el otro lado tenga un nodo se puede mandar junto con la conexión.
+
+**La autoridad de red no se replica: se deduce del nombre del nodo.** El host nombra a cada
+jugador con el ID de su peer, el nombre viaja con el spawn y cada máquina hace
+`set_multiplayer_authority(name.to_int())` en su `_enter_tree()`. Va en `_enter_tree()` y no
+en `_ready()` porque el `MultiplayerSynchronizer` ya necesita saber quién manda al entrar al
+árbol.
+
+**Sobre el `recursive = true` que veníamos marcando como trampa:** en v0.1 es lo correcto,
+porque el Synchronizer necesita la misma autoridad que la raíz. Muerde en v0.2, cuando entre
+el nodo de stats. Queda comentado en `player.gd`, en la línea donde va a doler.
+
+**El manejo de `server_disconnected` vive en el autoload, no en el lobby.** Cuando el host
+se cae, el cliente está en el mundo y `lobby.gd` no está en el árbol. El autoload sobrevive
+a los cambios de escena, y esa es la razón de que sea autoload.
+
+**Un efecto útil de `multiplayer.is_server()`:** sin ningún `MultiplayerPeer` asignado
+devuelve `true` y `get_unique_id()` devuelve 1. O sea que `world.tscn` corrida sola con F6
+spawnea un jugador y se puede probar en single player sin tocar nada.
+
+**Decisiones de game feel que salieron de jugarlo, no de razonarlo:** movimiento
+instantáneo sin inercia, gravedad realista de 9.8, y **control en el aire de 0.25** —el
+primer playtest mostró que con control total el salto se sentía a volar. Los tres números
+están en `docs/design.md`.
 
 **[1/8/2026]** — Setup completo. Organización, repo, estructura de carpetas, `CLAUDE.md`,
 rules y docs iniciales. Verificado el ida y vuelta de commits entre las dos máquinas.
