@@ -55,6 +55,15 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	# El zombie busca objetivos por grupo, así no necesita saber de qué nodo
+	# cuelgan los jugadores (scripts/enemies/zombie.gd).
+	#
+	# Va ANTES del return de autoridad de más abajo, y eso NO es un detalle: en
+	# el host, las cápsulas de los clientes no son autoridad suya. Si esta línea
+	# quedara después del return, al grupo entraría solo el jugador del propio
+	# host y el zombie perseguiría siempre al mismo, ignorando a los clientes.
+	add_to_group("players")
+
 	# Paso 6 de docs/netcode.md: la cámara se activa SOLO en la instancia local.
 	# Si no, cada cliente termina viendo por los ojos de la última cápsula que se
 	# spawneó, que es de los bugs más desconcertantes de un primer multiplayer.

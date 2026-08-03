@@ -4,6 +4,7 @@ extends Node3D
 ## existe, dónde aparece y cuándo se va (docs/netcode.md → "La regla").
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
+const ZOMBIE_SCENE: PackedScene = preload("res://scenes/enemies/zombie.tscn")
 
 ## Radio del círculo donde aparecen los jugadores, para que no spawneen uno
 ## adentro del otro.
@@ -15,6 +16,8 @@ const SPAWN_RADIUS: float = 2.0
 const DAMAGE_PER_REQUEST: float = 10.0
 
 @onready var _players: Node3D = $Players
+@onready var _zombies: Node3D = $Zombies
+@onready var _zombie_spawn: Marker3D = $ZombieSpawn
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _ready() -> void:
 
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	_spawn_player(multiplayer.get_unique_id())
+	_spawn_zombie()
 
 
 ## La llama un cliente cuando terminó de cargar esta escena. Corre en el host.
@@ -91,6 +95,17 @@ func _spawn_player(peer_id: int) -> void:
 	# replica al resto. El host es el único que llega hasta acá.
 	_players.add_child(player)
 	print("[world] jugador spawneado para el peer %d" % peer_id)
+
+
+# Un solo zombie fijo, adentro del galpón. El sistema de spawn y la densidad son
+# v0.5; esto es solo para que haya de qué escaparse.
+func _spawn_zombie() -> void:
+	var zombie: CharacterBody3D = ZOMBIE_SCENE.instantiate()
+	# La posición vive en el Marker3D de la escena y no acá, para poder
+	# arrastrarla en el editor sin tocar código.
+	zombie.position = _zombie_spawn.position
+	_zombies.add_child(zombie)
+	print("[world] zombie spawneado en %v" % zombie.position)
 
 
 func _on_peer_disconnected(peer_id: int) -> void:

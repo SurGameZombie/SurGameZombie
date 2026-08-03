@@ -22,9 +22,13 @@ const GHOST_PEER_ID: int = 999999
 ## Dónde vive request_damage(). Mismo motivo que arriba para que sea NodePath.
 @export var world_path: NodePath = ^".."
 
+## El contenedor de zombies. Mismo motivo.
+@export var zombies_root_path: NodePath = ^"../Zombies"
+
 @onready var _label: Label = $StatsLabel
 @onready var _players_root: Node3D = get_node(players_root_path)
 @onready var _world: Node = get_node(world_path)
+@onready var _zombies_root: Node3D = get_node(zombies_root_path)
 
 
 func _process(_delta: float) -> void:
@@ -86,4 +90,28 @@ func _build_text() -> String:
 			player.get_multiplayer_authority(),
 			stats.get_multiplayer_authority(),
 		])
+	for zombie: Zombie in _zombies_root.get_children():
+		lines.append(_zombie_line(zombie))
 	return "\n".join(lines)
+
+
+# Los números de navegación solo existen en el host: el agente del cliente nunca
+# navega, así que allá daría todo cero y parecería un bug. El estado sí baja
+# replicado, y compararlo entre las dos pantallas es lo que prueba que el cliente
+# no está simulando por su cuenta.
+func _zombie_line(zombie: Zombie) -> String:
+	var state_name: String = "ATTACKING" if zombie.state == Zombie.State.ATTACKING else "CHASING"
+	if not multiplayer.is_server():
+		return "zombie    %-9s  (nav: solo en el host)" % state_name
+
+	var agent: NavigationAgent3D = zombie.get_node("NavigationAgent3D")
+	# dist es la línea recta y camino es lo que realmente va a recorrer. Que
+	# camino sea bastante mayor que dist es el rodeo por el NavMesh; si son
+	# iguales y pts es 2, está yendo derecho.
+	var straight: float = zombie.global_position.distance_to(agent.target_position)
+	return "zombie    %-9s  dist %5.1f   camino %5.1f (%d pts)" % [
+		state_name,
+		straight,
+		agent.get_path_length(),
+		agent.get_current_navigation_path().size(),
+	]
