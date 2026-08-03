@@ -35,3 +35,16 @@ var health: float = 100.0
 # y escala solo cuando en v0.4 aparezcan más nodos de estado del host.
 func _enter_tree() -> void:
 	set_multiplayer_authority(HOST_PEER_ID)
+
+
+## Le baja vida a este jugador. La llama SOLO el host.
+##
+## En el paso 4 el zombie la va a llamar DIRECTO, sin pasar por
+## world.gd::request_damage(): el zombie ya corre en el host, así que pedirse
+## permiso a sí mismo por red no tendría sentido. El RPC es la puerta para los
+## clientes, no el camino del daño.
+func take_damage(amount: float) -> void:
+	if not multiplayer.is_server():
+		return
+	# Clampear en 0 es provisorio: morir, caer y respawnear son el paso 6.
+	health = maxf(0.0, health - amount)

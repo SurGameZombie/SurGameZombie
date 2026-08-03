@@ -6,11 +6,12 @@ extends CanvasLayer
 ## haya nada que quite vida.
 ##
 ## Todo el andamio está en este archivo a propósito: cuando entre el HUD de
-## verdad se borra el script, el nodo de world.tscn y la acción debug_hurt, y no
-## queda nada suelto.
+## verdad se borran el script, el nodo de world.tscn y las acciones debug_hurt y
+## debug_hurt_invalid, y no queda nada suelto.
 
-## Cuánta vida saca la tecla de debug. Ver _unhandled_input().
-const DEBUG_DAMAGE: float = 10.0
+## Un peer que no existe. Sirve para pedirle al host daño sobre un jugador
+## inventado y ver que lo rechaza.
+const GHOST_PEER_ID: int = 999999
 
 ## El contenedor de jugadores de world.tscn. La ruta va por @export para que
 ## viva en la escena y no hardcodeada acá adentro (CLAUDE.md → "Reglas de
@@ -18,8 +19,12 @@ const DEBUG_DAMAGE: float = 10.0
 ## nodo no se resuelve cuando el .tscn se escribe a mano: queda en null.
 @export var players_root_path: NodePath = ^"../Players"
 
+## Dónde vive request_damage(). Mismo motivo que arriba para que sea NodePath.
+@export var world_path: NodePath = ^".."
+
 @onready var _label: Label = $StatsLabel
 @onready var _players_root: Node3D = get_node(players_root_path)
+@onready var _world: Node = get_node(world_path)
 
 
 func _process(_delta: float) -> void:
@@ -29,23 +34,41 @@ func _process(_delta: float) -> void:
 	_label.text = _build_text()
 
 
-# SIN chequeo de autoridad, a propósito. Es una sonda, no el patrón: viola la
-# regla de que los clientes nunca escriben vida (.claude/rules/netcode.md) justo
-# para poder ver qué pasa cuando lo intentan.
-#
-#  - Apretada en el HOST: es autoridad de todos los Stats, así que la escritura
-#    sale y los números bajan en las dos pantallas.
-#  - Apretada en un CLIENTE: no es autoridad de ninguno, así que su escritura se
-#    queda en su máquina y la pantalla del host no se mueve. Si se moviera, la
-#    trampa del recursive no está resuelta.
-#
-# En el paso 3 esto se reemplaza por request_damage.rpc_id(1, …) y el gate vuelve.
+# Las dos teclas mandan el MISMO RPC: lo único que cambia es si el pedido es
+# legítimo. Ya no se escribe health desde acá — hasta el paso 2 esta función lo
+# hacía directo y se salteaba al host, que es justo lo que
+# .claude/rules/netcode.md prohíbe.
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("debug_hurt"):
-		return
+	if event.is_action_pressed("debug_hurt"):
+		# Daño sobre vos mismo, que es lo único que el host acepta. Hace de
+		# zombie hasta que exista el zombie de verdad (paso 4).
+		_world.request_damage.rpc_id(1, multiplayer.get_unique_id())
+	elif event.is_action_pressed("debug_hurt_invalid"):
+		_send_invalid_requests()
+
+
+# Los dos pedidos que el host tiene que rechazar, uno por cada validación.
+#
+# Sin esto no hay forma de saber si el host valida o si acepta todo: un cliente
+# que se porta bien manda pedidos válidos, y eso se ve idéntico en los dos casos.
+# Los rechazos se imprimen en la consola DEL HOST, no en la de quien los manda.
+func _send_invalid_requests() -> void:
+	# Mentira 1: un peer que no existe. Rebota en el chequeo de existencia.
+	_world.request_damage.rpc_id(1, GHOST_PEER_ID)
+	# Mentira 2: daño sobre otro jugador. Rebota en el chequeo de autoría.
+	var other_id: int = _other_peer_id()
+	if other_id != 0:
+		_world.request_damage.rpc_id(1, other_id)
+
+
+# El ID de cualquier otro jugador, o 0 si estás solo y no hay a quién pedírselo.
+func _other_peer_id() -> int:
+	var own_id: int = multiplayer.get_unique_id()
 	for player: Node in _players_root.get_children():
-		var stats: PlayerStats = player.get_node("Stats")
-		stats.health = maxf(0.0, stats.health - DEBUG_DAMAGE)
+		var id: int = player.name.to_int()
+		if id != own_id:
+			return id
+	return 0
 
 
 func _build_text() -> String:

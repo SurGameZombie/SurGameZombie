@@ -9,6 +9,11 @@ const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 ## adentro del otro.
 const SPAWN_RADIUS: float = 2.0
 
+## Cuánto baja un pedido de daño. Vive en el host y NO viaja por la red: es la
+## única forma de que un cliente no pueda pedir 999999 de daño. Un valor de
+## gameplay que no cruza la red no puede mentir.
+const DAMAGE_PER_REQUEST: float = 10.0
+
 @onready var _players: Node3D = $Players
 
 
@@ -36,6 +41,43 @@ func notify_world_ready() -> void:
 	if not multiplayer.is_server():
 		return
 	_spawn_player(multiplayer.get_remote_sender_id())
+
+
+## La llama un cliente para pedir que le bajen vida a un jugador. Corre en el
+## host, que valida contra su propio estado y recién ahí aplica.
+@rpc("any_peer", "call_local", "reliable")
+func request_damage(target_peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+
+	# Verificado corriendo 4.7.1: en una llamada local por rpc_id() —el host
+	# pidiéndose a sí mismo— esto devuelve el ID local, NO 0. El 0 que dice la
+	# documentación es para cuando la función se llama directo, sin pasar por rpc.
+	# O sea que acá nunca hay que normalizarlo.
+	var sender_id: int = multiplayer.get_remote_sender_id()
+
+	# 1. ¿El target existe? Un cliente puede mandar un ID inventado, o uno que se
+	#    desconectó entre que mandó el pedido y que el host llegó a procesarlo.
+	var stats: PlayerStats = _find_stats(target_peer_id)
+	if stats == null:
+		print("[world] daño rechazado: el peer %d no tiene jugador" % target_peer_id)
+		return
+
+	# 2. ¿Se lo pide sobre sí mismo? Hoy no hay PvP ni armas de jugador, así que
+	#    pedir daño sobre otro todavía no es un caso legítimo.
+	if sender_id != target_peer_id:
+		print("[world] daño rechazado: el peer %d lo pidió sobre %d" % [sender_id, target_peer_id])
+		return
+
+	# 3. Aplicar. El resultado baja solo por el Synchronizer del nodo Stats.
+	stats.take_damage(DAMAGE_PER_REQUEST)
+
+
+func _find_stats(peer_id: int) -> PlayerStats:
+	var player: Node = _players.get_node_or_null(NodePath(str(peer_id)))
+	if player == null:
+		return null
+	return player.get_node_or_null("Stats") as PlayerStats
 
 
 func _spawn_player(peer_id: int) -> void:
