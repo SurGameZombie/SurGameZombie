@@ -29,22 +29,73 @@ extends CharacterBody3D
 
 @onready var _camera: Camera3D = $Camera3D
 
+## La cápsula visible y la marca de orientación. Se apagan en la instancia local
+## porque la cámara está adentro de la cápsula.
+@onready var _body: Node3D = $Body
+
+
+# La autoridad NO se replica sola: cada máquina la deduce del nombre del nodo.
+# El host nombra a cada jugador con el ID de su peer ("1", "1043872"), el nombre
+# viaja con el spawn, y así las tres máquinas llegan a la misma conclusión.
+#
+# Va en _enter_tree() y no en _ready() porque el MultiplayerSynchronizer hijo ya
+# necesita saber quién manda cuando entra al árbol.
+#
+# recursive es true por default y acá eso es lo que queremos: el Synchronizer
+# tiene que tener la misma autoridad que la raíz para que el transform fluya
+# cliente -> host -> resto.
+# OJO EN v0.2: cuando entre el nodo de stats (vida, hambre), ese tiene que
+# quedar en el host, y esta llamada se lo va a llevar al cliente. Ahí hay que
+# reasignarlo explícitamente (docs/netcode.md → "Paso 2: el segundo Synchronizer").
+func _enter_tree() -> void:
+	set_multiplayer_authority(name.to_int())
+
 
 func _ready() -> void:
+	# Paso 6 de docs/netcode.md: la cámara se activa SOLO en la instancia local.
+	# Si no, cada cliente termina viendo por los ojos de la última cápsula que se
+	# spawneó, que es de los bugs más desconcertantes de un primer multiplayer.
+	_camera.current = is_multiplayer_authority()
+
+	# La cámara vive adentro de la cápsula, así que la malla propia se apaga:
+	# desde la instancia local no hay cuerpo que ver. Las remotas sí lo tienen.
+	#
+	# La alternativa era adelantar la cámara para que quede fuera de la malla,
+	# pero eso saca la cámara del cuerpo: pegado a una pared verías a través.
+	# Cuando haya un modelo de verdad, esto se cambia por esconder solo la
+	# cabeza y dejar el cuerpo visible al mirar para abajo.
+	_body.visible = not is_multiplayer_authority()
+
+	if not is_multiplayer_authority():
+		return
 	# Captura el mouse: se esconde el cursor y el movimiento pasa a ser relativo
 	# e infinito, sin chocar contra el borde de la pantalla.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Sin este gate, tu mouse rotaría también el cuerpo de los otros jugadores
+	# en tu máquina, y el Synchronizer se pelearía con vos por el transform.
+	if not is_multiplayer_authority():
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event as InputEventMouseMotion)
 	# Escape suelta el mouse para poder salir de la ventana del juego.
 	elif event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Y un click lo vuelve a capturar. Recapturar va en el click y no en Escape
+	# a propósito: si Escape fuera un toggle, no habría forma de salir del juego.
+	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _physics_process(delta: float) -> void:
+	# Paso 4 de docs/netcode.md: solo el dueño simula. Las otras cápsulas no
+	# calculan nada — reciben el transform por el MultiplayerSynchronizer.
+	if not is_multiplayer_authority():
+		return
+
 	# get_gravity() devuelve un Vector3 (dirección incluida) tomado de los
 	# project settings. En el aire acumula; en el piso no, para que la velocidad
 	# vertical no crezca sin límite mientras caminás.

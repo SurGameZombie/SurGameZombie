@@ -323,9 +323,13 @@ Concreto, para que no haya que decidirlo mientras se escribe:
    fijo, o conectarse a una IP. Es el único archivo que sabe qué transporte se usa.
 2. El **host** es el único que instancia jugadores. Un `MultiplayerSpawner` en la escena
    del mundo replica cada instancia al resto.
-3. Al instanciar el jugador del peer N, el host llama `set_multiplayer_authority(N)` sobre
-   la raíz del jugador. Eso es lo que hace que después `is_multiplayer_authority()` sea
-   `true` en la máquina de N y `false` en las demás.
+3. **La autoridad no se replica: cada máquina la deduce del nombre del nodo.** El host
+   nombra al jugador con el ID de su peer (`"1"`, `"1043872"`), el nombre viaja con el
+   spawn, y el script del jugador hace `set_multiplayer_authority(name.to_int())` en su
+   `_enter_tree()`. Va en `_enter_tree()` y no en `_ready()` porque el
+   `MultiplayerSynchronizer` hijo ya necesita saber quién manda al entrar al árbol.
+   Acá `recursive = true` es lo correcto —el Synchronizer necesita la misma autoridad que
+   la raíz—; la trampa aparece en v0.2 con el nodo de stats.
 4. El script del jugador lee input y llama `move_and_slide()` **solo si**
    `is_multiplayer_authority()`. Las otras cápsulas no simulan nada: reciben el transform.
 5. Un `MultiplayerSynchronizer` en el jugador replica posición y rotación. Su autoridad es
@@ -333,9 +337,36 @@ Concreto, para que no haya que decidirlo mientras se escribe:
 6. La cámara se activa (`current = true`) **solo** en la instancia local. Si no, cada
    cliente ve por los ojos de la última cápsula que se instanció.
 
-**En v0.1 no hay un solo RPC del patrón 2**, porque todavía no hay estado del host que
-pedir. Los dos primeros aparecen juntos en v0.2. Que v0.1 no necesite ninguno es la señal
-de que el milestone está bien recortado.
+7. El cliente, apenas termina de cargar el mundo, le avisa al host por RPC. **Recién ahí**
+   el host lo spawnea. El porqué está abajo.
+
+### v0.1 sí tiene un RPC, y no es opcional
+
+*(Corregido al implementarlo. Este doc decía que v0.1 no tenía ninguno, y era falso.)*
+
+El razonamiento original era que v0.1 no necesita RPCs porque no hay estado del host que
+pedir. Es cierto para el **gameplay** y sigue siendo cierto: no hay vida, ni inventario, ni
+nada que validar. Pero el spawn tiene una carrera que no se ve razonándola:
+
+- El host spawnearía al jugador del peer N al recibir `peer_connected(N)`.
+- El cliente cambia a `world.tscn` al recibir `connected_to_server`.
+- Las dos señales disparan en el mismo instante, pero `change_scene_to_file()` **se difiere
+  al final del frame**.
+
+**En LAN el RTT es menor a 1 ms y un frame son 16 ms.** O sea que el paquete de spawn llega
+al cliente antes de que exista el `MultiplayerSpawner` de su lado, y se descarta. El
+síntoma sería "a veces el otro jugador no aparece", dependiendo de la latencia — justo la
+clase de bug que este documento dice que la autoridad única existe para evitar.
+
+La solución es un handshake de una línea: el cliente manda
+`notify_world_ready.rpc_id(1)` desde el `_ready()` de `world.gd`, y el host spawnea al
+recibirlo. Entra en el patrón 2 —el cliente pide, el host decide y valida el
+`get_remote_sender_id()`— aunque no sea gameplay.
+
+**La lección general, que vale para v0.2 en adelante:** cargar una escena no es
+instantáneo, así que **nada que dependa de que el otro lado tenga un nodo se puede mandar
+al mismo tiempo que la conexión**. Cuando el mundo tarde en cargar de verdad, esto se
+agrava, no se alivia.
 
 **Criterio de terminado:** host y cliente se ven moverse, en tiempo real, sin tirones, y
 al cerrar el cliente el host no crashea. Eso último es la mitad del trabajo y es lo que
@@ -346,8 +377,9 @@ se suele olvidar.
 **Objetivo:** un zombie que persigue por NavMesh y pega. Vida del jugador, caído, revivir,
 muerte y respawn. Todo el daño resuelto en el host.
 
-**v0.2 tiene dos RPCs del patrón 2, no uno:** el daño y `request_revive`. Los dos validan
-en el host y los dos usan la posición ya replicada, nunca una que mande el cliente.
+**v0.2 suma dos RPCs del patrón 2:** el daño y `request_revive`. Los dos validan en el host
+y los dos usan la posición ya replicada, nunca una que mande el cliente. (Son los dos
+primeros de *gameplay*; el primero del proyecto es el handshake de spawn de v0.1.)
 
 ### El orden, y qué depende de qué
 

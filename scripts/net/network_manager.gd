@@ -12,6 +12,9 @@ const DEFAULT_PORT: int = 7777
 ## Host + 3 clientes = los 4 jugadores de docs/design.md.
 const MAX_CLIENTS: int = 3
 
+const LOBBY_SCENE: String = "res://scenes/main/lobby.tscn"
+const WORLD_SCENE: String = "res://scenes/main/world.tscn"
+
 
 func _ready() -> void:
 	# Las cinco señales del MultiplayerAPI. peer_connected y peer_disconnected
@@ -69,3 +72,8 @@ func _on_connection_failed() -> void:
 
 func _on_server_disconnected() -> void:
 	print("[net] el host cerró la partida")
+	# Este handler vive acá y no en lobby.gd porque cuando el host se cae vos
+	# estás en el mundo y el lobby ya no está en el árbol. El autoload sobrevive
+	# a los cambios de escena: es exactamente para lo que existe.
+	multiplayer.multiplayer_peer = null
+	get_tree().change_scene_to_file(LOBBY_SCENE)
