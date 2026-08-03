@@ -30,13 +30,21 @@ usuario y usar `godot` directo.
 
 ```powershell
 & $godot --path . --editor             # abrir el editor
-& $godot --path .                      # correr el juego (necesita main_scene definida)
+& $godot --path .                      # correr el juego (main_scene = lobby.tscn)
 & $godot --headless --path . --import  # importar y verificar que no haya errores
+
+# Correr una escena en un proceso limpio y salir a los 90 frames. Agarra errores
+# de parseo y de @onready, y sirve para distinguir "el código está mal" de "el
+# editor abierto tiene una copia vieja" (ver docs/bitacora.md → Problemas).
+& $godot --headless --path . res://scenes/main/world.tscn --quit-after 90
+
+# Rehornear el NavMesh del greybox. CORRERLO SIEMPRE después de tocar la
+# geometría de scenes/main/yard.tscn: si no, el NavMesh queda con la forma vieja
+# y el zombie camina atravesando paredes nuevas. Sale con código 1 si falla.
+& $godot --headless --path . -s res://tools/bake_navmesh.gd
 ```
 
 `--import` es el flag correcto para verificar el proyecto: importa los recursos y sale.
-No usar `--headless --quit`, que intenta correr el juego y falla mientras no haya
-`run/main_scene` en `project.godot`.
 
 Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
 ```powershell
@@ -51,6 +59,8 @@ Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
 - `resources/` — datos como `.tres`: items, tipos de zombie, loot tables
 - `assets/` — `models/` (.glb), `textures/`, `audio/`
 - `tests/` — suites de gdUnit4
+- `tools/` — scripts que se corren con `-s` desde línea de comandos, no son parte del
+  juego. Hoy solo el horneado del NavMesh
 - `docs/` — `plan.md` (arquitectura, stack y milestones), `design.md` (qué es el juego),
   `netcode.md` (reglas de red), `bitacora.md` (decisiones tomadas y problemas ya resueltos),
   `proceso.md` (cómo commiteamos, cómo documentamos y cómo buscamos errores),
