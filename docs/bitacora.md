@@ -14,9 +14,11 @@ código —modelo de autoridad, primera o tercera persona, idioma del código—
 Cómo se resuelven v0.1 **y v0.2** —paso a paso, con las dependencias marcadas— está escrito
 en `docs/netcode.md`.
 
-**v0.1 está escrita y falta jugarla.** Red, character controller y mundo están conectados;
-lo que falta es el playtest de host + cliente en dos instancias, que es el criterio de
-terminado real (`docs/netcode.md`).
+**v0.1 y v0.2 están escritas y falta jugarlas.** Red, character controller, mundo, zombie,
+daño, caído, revivir y respawn están conectados. Lo que falta en las dos es el mismo
+playtest de host + cliente en dos instancias, que es el criterio de terminado real
+(`docs/netcode.md`). El paso 6 de v0.2 está verificado con smoke tests headless, que no son
+lo mismo que jugarlo.
 
 **Pendiente antes de escribir código:** tutorial oficial 3D de Godot, los dos.
 Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
@@ -265,6 +267,17 @@ de tocar esa escena en el editor.** Para verificar mientras tanto, correrlo en p
 limpio: `& $godot --headless --path . res://ruta/a/escena.tscn --quit-after 90`. Eso lee de
 disco y ejecuta los `_ready()`, así que sirve de smoke test real.
 
+**Un `class_name` nuevo no existe para nadie hasta que se reimporta.** Al agregarle
+`class_name Player` a `player.gd`, cualquier otro script que lo nombrara fallaba con
+`Parse Error: Could not find type "Player" in the current scope`, aunque el archivo estaba
+bien escrito. La tabla de clases globales se arma al escanear el filesystem, no al parsear.
+
+→ **Regla permanente: después de agregar un `class_name`, correr
+`& $godot --headless --path . --import` antes de correr nada más.** Es la misma familia que
+el problema del autoload de acá abajo: el registro de nombres globales es un paso aparte del
+parseo. La salida del import lo confirma —lista `Player` bajo `update_scripts_classes`—, así
+que si el nombre no aparece ahí, no va a resolver.
+
 **Godot pisa los cambios que git hace en `project.godot`.** Si un `git pull` modifica
 `project.godot` con el editor abierto, Godot detecta el cambio externo y pregunta qué
 hacer. Hay que elegir **"Reload from disk"**.
@@ -356,6 +369,104 @@ no un feature que se agrega.
 ---
 
 ## Registro
+
+**[5/8/2026]** — **Paso 6 de v0.2: caído, revivir y respawn.** Con esto v0.2 queda escrita
+entera y solo falta el playtest de dos instancias. Entró en cuatro commits, uno por pedazo,
+y cada uno se verificó con un smoke test headless descartable antes de pasar al siguiente.
+
+**El zombie pasó de 2.5 a 3.7 m/s**, del playtest de la sesión anterior: a 2.5 se sentía
+inofensivo. **4.0 es techo duro** —la velocidad de caminata del jugador— porque todo el
+diseño del enemigo se apoya en que uno solo no alcanza a alguien que se mueve. El porqué
+completo está en `docs/design.md` → "Velocidad del zombie: 3.7 m/s".
+
+**El hallazgo que más va a servir después: `@rpc("authority")` significa "solo la autoridad
+de ESTE nodo", no "solo el host".** Verificado en la doc de 4.7 vía Context7
+(`MultiplayerApi.RPCMode`). El respawn necesita que el host mueva el cuerpo de un cliente, y
+la primera idea —declarar la RPC en `player.gd` con `"authority"`— hace exactamente lo
+contrario de lo que parece: la autoridad de ese nodo es el **cliente dueño**, así que el
+host habría quedado afuera y la RPC no se podría llamar nunca.
+
+La solución dejó **un tercer patrón de red** en `docs/netcode.md`, que hasta ahora tenía dos:
+la RPC vive en `world.gd` —cuya autoridad no se reasigna nunca— y llama a un método normal
+del jugador local. El host **no escribe** la posición de un cuerpo ajeno: se la ordena al
+dueño, que se mueve a sí mismo y replica hacia afuera como siempre. Si el host la escribiera
+directo, el `MultiplayerSynchronizer` del dueño se la pisaría en el tick siguiente.
+
+**El NavMesh horneado queda 0.3 m por encima del piso** (vértices en `y = 0.3`, cara de
+arriba del `Floor` en `y = 0.0`). Dos consecuencias que no se veían razonándolo:
+
+- El chequeo de `MAX_RESPAWN_SNAP` que este proyecto tenía escrito **no habría funcionado**:
+  comparaba distancia en 3D, que con ese offset nunca baja de 0.3 m ni parado en medio del
+  patio, así que el respaldo habría disparado siempre. Ahora se mide **solo en horizontal**.
+- Del lado bueno, el offset garantiza que el punto snapeado cae **por encima** de la
+  superficie caminable y nunca adentro: no hay forma de respawnear enterrado. Medido: se
+  aparece en `y = 0.300` y un segundo después el cuerpo está en `y = 0.0001` apoyado.
+
+**Revivir terminó siendo dos RPCs, no uno.** `docs/netcode.md` suponía un `request_revive`
+de un disparo, pero se decidió que sea **mantener** la tecla, y mantener es un estado que
+dura. Como mandar estado por RPC cada frame está prohibido, se mandan los dos **bordes**
+—empecé, solté— y el host lleva el progreso, que baja replicado en el nodo de stats **del
+caído**: por eso el caído ve que lo están levantando.
+
+**Todas las condiciones de revivir viven en una sola función del host, `_can_revive()`.** Es
+a propósito y mirando a v0.3: cuando revivir requiera una venda, se agrega una condición ahí
+adentro y no se toca una línea del cliente, porque el cliente no conoce ninguna regla — solo
+pide. El host revalida entero cada frame, y eso cubre alejarse, que al que levanta lo tiren y
+que se desconecte a mitad de camino sin escribir un caso especial para cada uno.
+
+**Ni el timer del caído ni los revivires en curso se guardan en un diccionario de
+`world.gd`.** El countdown vive adentro del nodo de stats de cada jugador y los revivires se
+recorren iterando los hijos vivos de `Players`. Los dos por la misma razón: al desconectarse
+un peer su jugador se libera, y un diccionario quedaría apuntando a un nodo que ya no
+existe. Probado: caer, desconectarse antes de que venza el timer, y confirmar que el host no
+imprime la muerte ni tira `previously freed instance`.
+
+**Detalle de GDScript que costó dos corridas:** los lambdas **capturan las locales por
+valor**. Escribirle a una variable local desde adentro de un `func()` no sale del lambda —
+hay que usar una variable del script. Pasó en un test, no en código del juego, pero es el
+tipo de cosa que se ve como "el valor no se actualiza" y no como lo que es.
+
+**Lo que salió del playtest de dos instancias**, que era lo único que los smoke tests no
+podían cubrir:
+
+- **El progreso de revivir se ve bien en la pantalla del caído.** Confirmado, la
+  replicación del `revive_progress` anda.
+- **`REVIVE_DURATION` pasa de 3 a 10 segundos.** Tres se sentían demasiado cortos: no
+  llegaban a poner en riesgo al que levanta, que es el punto entero de que sea mantener la
+  tecla. A 10 s, contra un zombie a 3.7 m/s, alcanza para que uno que estaba a 37 m llegue.
+- **El zombie se trababa contra el cuerpo del caído.** Se resolvió con avoidance, no
+  ignorándolo — ver la entrada de abajo.
+- **El timer de 60 s seguía bajando durante el revivir, y estaba mal.** Ahora se congela
+  mientras alguien mantiene la tecla y vuelve a correr si suelta. Es lo que hace que
+  quedarte con un segundo todavía tenga salida, en vez de castigar al que salva por haber
+  tardado en llegar. Detalle en `docs/netcode.md` → "Paso 6".
+
+**El cuerpo del caído estorba, pero no traba.** La primera versión hacía que el zombie
+ignorara al caído como objetivo, y eso alcanzaba para que cambiara de presa pero no para que
+pudiera pasar: seguía empujando contra la cápsula. La decisión fue que **lo rodee**, porque
+un cuerpo tirado que se atraviesa como un fantasma se ve peor que uno que estorba.
+
+Se hizo **sin tocar capas de colisión**: un `NavigationObstacle3D` en la escena del jugador
+—radio 0.8, apagado— que se prende solo mientras está caído, y `avoidance_enabled` en el
+`NavigationAgent3D` del zombie. **El NavMesh rodea lo que estaba horneado; el avoidance
+rodea lo que apareció después.** El obstáculo se prende y se apaga desde `_process()` **sin
+gate de autoridad**, y eso no es un descuido: el que necesita el obstáculo prendido es el
+host, y en la máquina del host el cuerpo de un cliente caído es una instancia que no es
+autoridad suya. Como `is_downed` baja replicado, las tres máquinas llegan a lo mismo.
+
+**Lo que cambia en el código al prender avoidance, y no es opcional:** el agente deja de
+devolver la velocidad en el acto. Se le pasa la que uno **quiere** con `set_velocity()` y él
+contesta la esquivada por la señal `velocity_computed`, más tarde en el mismo frame — o sea
+que `move_and_slide()` pasa a llamarse desde el handler, no desde `_physics_process()`.
+
+**Y la trampa que trae: `velocity_computed` se emite TODOS los frames** mientras avoidance
+esté prendido, hayas pedido algo o no. Sin una bandera que diga "este frame pedí moverme",
+el handler llamaría `move_and_slide()` también en el cliente —donde el `_physics_process`
+está apagado a propósito— y en los frames en que el zombie decidió quedarse quieto.
+
+**Lo que queda sin verificar:** que el zombie efectivamente rodee, que es lo que se prueba a
+continuación. Los otros números de revivir —2 m de rango, 30 de vida— siguen siendo valores
+de arranque.
 
 **[2/8/2026]** — **Primer código del proyecto.** Entraron el esqueleto de red
 (`network_manager.gd` como autoload + `lobby.tscn`), el input map, el character controller
