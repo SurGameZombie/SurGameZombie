@@ -182,6 +182,18 @@ Recomendación concreta: **Kenney + KayKit como base** (comparten estilo chunky 
 - **Importar todo como glTF (`.glb`)**. Es el formato que Godot maneja mejor. Convertir FBX/OBJ a glb en Blender antes de meterlo al proyecto.
 - **Blender** (gratis) es la única herramienta adicional obligatoria: cortar, unir, arreglar escalas, ajustar materiales.
 
+### Blender MCP: para cuando haya assets, no antes
+
+Pendiente anotado el 2026-08-05. **No instalar todavía.**
+
+Cuando toque normalizar los packs en lote —escalas, pivotes, orígenes, unificar materiales y exportar `.glb` sobre los 80 assets del Survival Kit— eso es Python determinístico y repetitivo, tedioso sin ser difícil. `ahujasid/blender-mcp` (MIT, gratis, 25.5k stars, activo a agosto 2026) automatiza esa parte desde Claude Code. Es la única opción con tracción real: la segunda tiene 298 stars y está muerta desde marzo de 2025.
+
+**El momento es cuando tengamos los packs bajados y toque normalizarlos**, no una versión concreta. Antes de eso no tiene qué hacer. Tres cosas verificadas para cuando llegue ese día:
+
+- **Ejecuta Python sin sandbox dentro de Blender** (`execute_blender_code`). El propio README lo marca como riesgo: guardar antes de usarlo.
+- **Manda telemetría** hasta que se le ponga `DISABLE_TELEMETRY=true` en la config del MCP. Desde julio 2026 la parte invasiva (prompts, código, screenshots) es opt-in, pero la mínima viene prendida.
+- **Sus integraciones generativas —Hyper3D Rodin, Sketchfab, Hunyuan3D— no se usan.** Generar modelos uno por uno rompe justo la coherencia visual de la que habla la sección anterior. El MCP puede aplicar un cambio de paleta en lote; **cuál** es decisión de ustedes, no suya.
+
 ---
 
 ## 5. Organización del proyecto para Claude Code
