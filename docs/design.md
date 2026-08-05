@@ -288,6 +288,57 @@ Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
       menos:** la serialización de red es tediosa, no pedagógica — escribirla a mano no
       enseña Godot, que era el motivo de escribir el character controller.
 
+- [ ] **Revivir no tiene límite de usos, y eso anula la tensión del sistema entero — se
+      responde en v0.3.** Anotado al terminar v0.2, sin implementar.
+
+      Hoy un dúo se puede reanimar indefinidamente: uno cae, el otro lo levanta, cae el
+      otro, lo levanta el primero, y así para siempre. **Nadie muere nunca.** Todo lo que
+      hace tenso el estado caído —el timer de 60 s, levantarse con 30 de vida, los 10
+      segundos quieto al lado del cuerpo— se apoya en que en algún momento la muerte real
+      llegue, y sin un límite no llega jamás.
+
+      **La idea a evaluar:** si un jugador muere de verdad más de una vez dentro de una
+      ventana de tiempo —por ejemplo 10 minutos—, la próxima vez **no queda caído: muere
+      directo**, sin oportunidad de que lo levanten. Así la primera muerte de una racha
+      perdona y la segunda no, y una noche que se está yendo al carajo se siente como que
+      se va al carajo.
+
+      Falta decidir: el largo de la ventana, cuántas muertes la disparan, si se avisa en
+      pantalla —y sobre todo **si la ventana se cuenta por jugador o para el grupo**. Va
+      en v0.3 y no antes porque ahí entra la muerte real con bolsa, que es cuando morir
+      empieza a costar algo por sí solo y se puede juzgar cuánto falta encima.
+
+- [ ] **Un cuerpo caído tapa una puerta entera, y no debería tapar más que alguien
+      parado.** Anotado al terminar v0.2, sin implementar.
+
+      Hoy el caído es una cápsula parada con un anillo de evitación de 0.8 m encima, así
+      que el zombie necesita 1.2 m de despeje para rodearlo y **las puertas interiores del
+      greybox miden 1.4 m**. Un cuerpo tirado en un vano lo bloquea del todo. El objetivo
+      es que el zombie pueda pasarle **por encima o al lado** sin trabarse.
+
+      Ojo con la mitad que se pasa por alto: **el mismo problema lo tiene el que viene a
+      levantarte.** Si el cuerpo tapa el vano, el que te salva tampoco entra, y eso es peor
+      que el zombie trabado — bloquea el rescate en el único lugar donde importa.
+
+      Las dos salidas conocidas se pisan con otras cosas: bajarle el radio al obstáculo lo
+      hace más fácil de atravesar visualmente, y darle al caído un collider bajo de verdad
+      —que es lo correcto— depende de que exista una pose tirado, o sea de los assets y las
+      animaciones de v0.6. Hasta entonces puede hacer falta una solución intermedia.
+
+- [ ] **Dos jugadores levantando al mismo caído: hoy el segundo pisa al primero.** Anotado
+      al terminar v0.2, sin implementar.
+
+      El segundo `request_revive_start` sobrescribe quién está levantando y resetea el
+      progreso a 0, así que dos personas ayudando avanzan **menos** que una sola. Con dos
+      jugadores no se nota; **con cuatro va a pasar seguido**, y en el peor momento: cuando
+      cae alguien y los dos que quedan corren a ayudar.
+
+      Falta decidir cuál de las tres: que el primero **bloquee** y el segundo reciba un "ya
+      lo están levantando"; que los dos **sumen** y levantarlo entre dos vaya al doble de
+      velocidad; o que el segundo simplemente **no haga nada** hasta que el primero suelte.
+      Sumar es lo más cooperativo pero es el único que cambia el balance de los 10 s, así
+      que se decide junto con ese número, no aparte.
+
 ## Milestones
 
 Cada uno tiene que ser jugable de punta a punta antes de pasar al siguiente.
