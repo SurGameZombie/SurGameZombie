@@ -132,6 +132,7 @@ inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
 | Altura de la cámara | 1.65 m |
 | Velocidad de caminata | 4 m/s |
 | Velocidad de corrida | 7 m/s |
+| Velocidad del zombie | 3.7 m/s |
 | Control en el aire | 0.25 |
 | Capacidad de carga sin mochila | 25 kg |
 | Capacidad de carga con mochila | 40 kg |
@@ -184,6 +185,28 @@ hace que el movimiento se sienta con peso. Los shooters de movimiento rápido ha
 contrario a propósito, y no es el juego que estamos haciendo.
 
 Es la primera decisión de game feel del proyecto que salió de jugarlo y no de razonarlo.
+
+### Velocidad del zombie: 3.7 m/s
+
+Segunda decisión de game feel salida de jugarlo. Del playtest del zombie de v0.2, el
+2026-08-05.
+
+Arrancó en **2.5 m/s** —elegido como "bien por debajo del jugador"— y se sentía
+inofensivo: caminando te ibas sin apurarte, así que el zombie no era una amenaza sino un
+obstáculo que se movía despacio.
+
+**4.0 m/s es un techo duro, no un número al que acercarse más.** Es la velocidad de
+caminata del jugador, y el enemigo está diseñado sobre la premisa de que **un solo zombie
+nunca alcanza a alguien que se mueve**: lo que lo hace peligroso es que te acorrale, que
+sean varios, o que estés ocupado en otra cosa. Si iguala o pasa los 4.0, esa premisa se
+cae y el zombie pasa a ser otro enemigo — uno que te caza solo, sin necesitar ni grupo ni
+terreno a favor.
+
+A 3.7 el margen caminando es de **0.3 m/s**, y eso es lo que hay que tener en cuenta al
+tunear lo que venga: alcanza para escaparse en línea recta y en campo abierto, pero
+cualquier esquina, obstáculo o roce contra una pared se lo come. Correr (7 m/s) sigue
+siendo la salida clara, y es la que se va a estrechar sola cuando en v0.4 entre la
+stamina.
 
 ## Los primeros 10 items
 

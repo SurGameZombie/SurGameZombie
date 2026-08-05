@@ -14,10 +14,14 @@ enum State { CHASING, ATTACKING }
 
 const HOST_PEER_ID: int = 1
 
-## Velocidad de persecución, en m/s. docs/design.md lo fija como LENTO: por
-## debajo de los 4.0 m/s que camina el jugador, así que uno solo nunca te alcanza
-## si te movés. Es peligroso cuando te acorrala o cuando son varios.
-@export var move_speed: float = 2.5
+## Velocidad de persecución, en m/s. Salió de jugarlo: a 2.5 se sentía
+## inofensivo (docs/design.md → "Velocidad del zombie: 3.7 m/s").
+##
+## 4.0 es techo duro y no se toca: es lo que camina el jugador, y todo el diseño
+## del enemigo se apoya en que uno solo nunca alcanza a alguien que se mueve. A
+## 3.7 el margen caminando es de 0.3 m/s, así que te escapás en línea recta y en
+## campo abierto, no doblando ni entre obstáculos.
+@export var move_speed: float = 3.7
 
 ## Cuánta vida saca cada mordida.
 @export var attack_damage: float = 10.0
