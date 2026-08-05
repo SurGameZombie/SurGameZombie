@@ -175,6 +175,30 @@ esa lista quedó vieja porque el plan se escribió **antes** de compararlos de v
 
 Registra un autoload `_mcp_game_helper` en `project.godot`. Es esperado, no un accidente.
 
+### Tooling: Context7 como MCP de documentación
+
+Agregado el 2026-08-05, en `.mcp.json` en la raíz del repo.
+
+El modo de falla número uno del proyecto es que el modelo escribe Godot 3 en vez de 4.7.
+Declarar la versión arriba de todo en `CLAUDE.md` corta esa contaminación a la mitad;
+Context7 ataca la otra mitad, metiéndole la doc real de 4.7 en contexto en vez de que la
+escriba de memoria.
+
+Gratis, free tier sin API key. **Es un MCP remoto:** las consultas de documentación salen
+a un servidor de terceros. No es telemetría oculta —es cómo funciona— pero no es local.
+
+Va en `.mcp.json` y no en configuración local **a propósito**, por el mismo motivo por el
+que `addons/godot_ai/` está commiteado: las dos máquinas tienen que correr la misma
+configuración de MCP (ADR-0006).
+
+**Pide aprobación una vez por máquina**, la primera vez que arranca Claude Code después de
+traerse el archivo. Es esperado, no un error: un MCP que viene de un archivo del repo no se
+confía solo, porque ese archivo pudo haber llegado en un pull.
+
+`godot-ai` **no** va en `.mcp.json`: su comando tiene rutas absolutas del home de cada
+usuario, así que lo configura el propio plugin desde el editor. La simetría entre máquinas
+de ese la da tener `addons/godot_ai/` commiteado, no este archivo.
+
 ---
 
 ## Problemas que ya nos pasaron
