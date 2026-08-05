@@ -54,7 +54,7 @@ de formas que no se ven hasta que hay tres jugadores conectados.
 
 Preguntarse: ¿esto es el movimiento del propio jugador? Si no lo es, corre en el host.
 
-## Los dos patrones
+## Los tres patrones
 
 ```gdscript
 # 1. Movimiento propio: solo el dueño simula.
@@ -74,7 +74,22 @@ func request_pickup(item_id: String) -> void:
     # validar, aplicar, replicar
 ```
 
-Si lo que estás escribiendo no entra en ninguno de los dos, preguntá antes de seguir.
+```gdscript
+# 3. El host decide algo sobre el cuerpo de un cliente: se lo ORDENA al dueño.
+# El host no puede escribirle la posición — el Synchronizer del dueño se la pisa.
+# Va en world.gd, NO en player.gd: ver la trampa de abajo.
+@rpc("authority", "call_local", "reliable")
+func respawn_at(point: Vector3) -> void:
+    # corre en la máquina del dueño; busca su propio jugador y lo mueve
+```
+
+**Trampa de `@rpc("authority")`:** significa *"solo la autoridad de **este nodo**"*, no
+*"solo el host"*. En un nodo con autoridad de cliente —`player.gd`, que hace
+`set_multiplayer_authority(name.to_int())`— el flag deja afuera al host y la RPC no se
+puede mandar nunca. Poner esas RPC en un nodo cuya autoridad no se reasigna (`world.gd`), o
+usar `"any_peer"` y validar `get_remote_sender_id() == 1` a mano.
+
+Si lo que estás escribiendo no entra en ninguno de los tres, preguntá antes de seguir.
 
 ## Donde se tocan: el modificador de velocidad
 

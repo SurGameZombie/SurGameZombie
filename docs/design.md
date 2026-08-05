@@ -102,6 +102,23 @@ distintos.
   respawneás cerca de donde caíste.
   Por qué: hace el co-op cooperativo de verdad y mantiene la tensión sin que morir
   arruine la sesión.
+  **Levantar a alguien es mantener la tecla 10 segundos, no apretarla**, y te deja con
+  **30 de 100 de vida**, no con la vida llena. Las dos cosas apuntan a lo mismo: que
+  levantar a alguien cueste algo. Mantener la tecla te clava quieto al lado del caído
+  —contra un zombie a 3.7 m/s, diez segundos alcanzan para que uno que estaba a **37 m**
+  te alcance, o sea que la pregunta deja de ser "¿hay uno cerca?" y pasa a ser "¿dónde
+  está el que hay en el mapa?"—, y levantarse débil hace que el segundo caído llegue
+  rápido. Si te levantaran con la vida llena, quedar caído no costaría más que tiempo.
+  *(3 segundos fue el primer valor y se sintió demasiado corto jugándolo: no llegaba a
+  poner en riesgo al que levantaba.)*
+  **El reloj se congela mientras te están levantando**, y vuelve a correr si el otro
+  suelta la tecla. Así quedarte con un segundo todavía tiene salida: si alguien llega y
+  mantiene, hay tiempo; si suelta, morís al instante. La tensión queda en el momento que
+  importa en vez de castigar al que salva por haber tardado en llegar.
+  **El zombie no ataca a un caído:** va por el que está parado. Eso es lo que pone el
+  riesgo en el que se agacha a levantar y no en el que ya está en el piso.
+  **En v0.3 revivir va a requerir un item médico**, y la vida que devuelve va a depender
+  de cuál se usó — de ahí que 30 sea un número y no *la* regla.
   En red, el cuerpo sigue siendo del cliente estando caído: el host decide que caíste y el
   cliente respeta su propio flag dejando de leer input (`docs/netcode.md` → "El estado
   caído no reasigna autoridad").
@@ -134,6 +151,10 @@ inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
 | Velocidad de corrida | 7 m/s |
 | Velocidad del zombie | 3.7 m/s |
 | Control en el aire | 0.25 |
+| Tiempo caído antes de morir | 60 s |
+| Distancia para levantar a alguien | 2 m |
+| Tiempo manteniendo la tecla para levantar | 10 s |
+| Vida con la que te levantan | 30 de 100 |
 | Capacidad de carga sin mochila | 25 kg |
 | Capacidad de carga con mochila | 40 kg |
 | Greybox de v0.2 | 60 × 60 m |

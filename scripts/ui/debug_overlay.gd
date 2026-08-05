@@ -84,15 +84,30 @@ func _build_text() -> String:
 	# pantallas de un vistazo.
 	for player: Node in _players_root.get_children():
 		var stats: PlayerStats = player.get_node("Stats")
-		lines.append("%-9s vida %3.0f   cuerpo@%-9d stats@%d" % [
+		lines.append("%-9s vida %3.0f %-18s cuerpo@%-9d stats@%d" % [
 			player.name,
 			stats.health,
+			_downed_text(stats),
 			player.get_multiplayer_authority(),
 			stats.get_multiplayer_authority(),
 		])
 	for zombie: Zombie in _zombies_root.get_children():
 		lines.append(_zombie_line(zombie))
 	return "\n".join(lines)
+
+
+# Estado del caído: cuánto le queda y si lo están levantando. Los dos números los
+# escribe el host y bajan replicados, así que tienen que leerse IGUAL en las dos
+# pantallas. Si el porcentaje solo se mueve en la del host, no está replicando.
+func _downed_text(stats: PlayerStats) -> String:
+	if not stats.is_downed:
+		return ""
+	if stats.revive_progress > 0.0:
+		return "CAIDO %4.1fs  %3.0f%%" % [
+			stats.downed_time_left,
+			stats.revive_progress * 100.0,
+		]
+	return "CAIDO %4.1fs" % stats.downed_time_left
 
 
 # Los números de navegación solo existen en el host: el agente del cliente nunca

@@ -77,6 +77,11 @@ func _physics_process(delta: float) -> void:
 		_retarget()
 
 	if _target == null:
+		# No queda nadie parado: o están todos caídos, o todavía no spawneó
+		# ninguno. Frena en el lugar en vez de quedarse con la velocidad del
+		# último frame.
+		state = State.CHASING
+		_stop(delta)
 		return
 
 	_try_attack()
@@ -96,6 +101,13 @@ func _nearest_player() -> Node3D:
 	var best: Node3D = null
 	var best_distance: float = INF
 	for player: Node3D in get_tree().get_nodes_in_group("players"):
+		# Los caídos no cuentan como objetivo: el zombie va por el que sigue
+		# parado. Es lo que hace que levantar a alguien sea una decisión con
+		# riesgo y no un trámite — el que se agacha a levantarlo es el que queda
+		# expuesto, no el que está en el piso.
+		var stats: PlayerStats = player.get_node_or_null("Stats") as PlayerStats
+		if stats == null or stats.is_downed:
+			continue
 		var distance: float = global_position.distance_to(player.global_position)
 		if distance < best_distance:
 			best_distance = distance
@@ -124,14 +136,12 @@ func _try_attack() -> void:
 
 
 func _move(delta: float) -> void:
+	if state == State.ATTACKING or _agent.is_navigation_finished():
+		_stop(delta)
+		return
+
 	if not is_on_floor():
 		velocity += get_gravity() * delta
-
-	if state == State.ATTACKING or _agent.is_navigation_finished():
-		velocity.x = 0.0
-		velocity.z = 0.0
-		move_and_slide()
-		return
 
 	# get_next_path_position() devuelve el siguiente vértice del camino, no la
 	# posición del jugador: es acá donde el NavMesh hace que rodee las paredes.
@@ -140,6 +150,15 @@ func _move(delta: float) -> void:
 	velocity.x = direction.x * move_speed
 	velocity.z = direction.z * move_speed
 	_face(next_point)
+	move_and_slide()
+
+
+# Frena donde está, sin dejar de caer.
+func _stop(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	velocity.x = 0.0
+	velocity.z = 0.0
 	move_and_slide()
 
 

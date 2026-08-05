@@ -1,8 +1,12 @@
+class_name Player
 extends CharacterBody3D
 
-## Controller en primera persona. Por ahora es 100% local: no sabe nada de red.
-## Cuando llegue la replicación, el único cambio es un return temprano en
-## _physics_process() si no somos la autoridad de este nodo (docs/netcode.md).
+## Controller en primera persona. El cuerpo es autoridad del peer dueño: solo él
+## lee input y se mueve, y el MultiplayerSynchronizer replica el transform hacia
+## afuera (docs/netcode.md → "Los tres patrones", molde 1).
+##
+## Lo que este script NO decide: su vida, si está caído y dónde respawnea. Eso es
+## del host y entra por el nodo Stats o por una orden como teleport_to().
 
 ## Velocidad caminando, en m/s. docs/design.md → "Escala y números base".
 @export var walk_speed: float = 4.0
@@ -27,11 +31,23 @@ extends CharacterBody3D
 ## 89 deja un margen para que la cámara nunca llegue a darse vuelta.
 @export var max_pitch_degrees: float = 89.0
 
+## Dónde vive world.gd, que es donde están los RPC del patrón 2. Va por NodePath
+## y no hardcodeado acá adentro, igual que en debug_overlay.gd. Al jugador lo
+## cuelga siempre el host de World/Players/<id>, así que "../.." resuelve igual
+## en las tres máquinas.
+@export var world_path: NodePath = ^"../.."
+
 @onready var _camera: Camera3D = $Camera3D
 
 ## La cápsula visible y la marca de orientación. Se apagan en la instancia local
 ## porque la cámara está adentro de la cápsula.
 @onready var _body: Node3D = $Body
+
+## El estado que resuelve el host. Desde acá solo se LEE: vida y caído los
+## escribe el host y bajan replicados (docs/netcode.md → "La regla").
+@onready var _stats: PlayerStats = $Stats
+
+@onready var _world: Node = get_node(world_path)
 
 
 # La autoridad NO se replica sola: cada máquina la deduce del nombre del nodo.
@@ -108,6 +124,14 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
 
+	# Estando caído dejamos de leer input. El flag lo decide el host: acá solo se
+	# respeta, igual que el return de arriba respeta la autoridad.
+	if _stats.is_downed:
+		_move_downed(delta)
+		return
+
+	_update_revive_input()
+
 	# get_gravity() devuelve un Vector3 (dirección incluida) tomado de los
 	# project settings. En el aire acumula; en el piso no, para que la velocidad
 	# vertical no crezca sin límite mientras caminás.
@@ -146,6 +170,71 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, target_x, max_change)
 		velocity.z = move_toward(velocity.z, target_z, max_change)
 
+	move_and_slide()
+
+
+## Mueve el cuerpo a un punto. La llama world.gd::respawn_at(), que corre en esta
+## máquina por orden del host.
+##
+## Corre acá y no en el host a propósito: el Synchronizer replica DESDE la
+## autoridad del nodo hacia afuera, y la autoridad del cuerpo es este peer. Si el
+## host escribiera la posición, el Synchronizer de esta máquina se la pisaría en
+## el tick siguiente (docs/netcode.md).
+func teleport_to(point: Vector3) -> void:
+	global_position = point
+	# Sin esto llegás al punto nuevo con la velocidad de la caída anterior y
+	# seguís deslizándote un rato después de aparecer.
+	velocity = Vector3.ZERO
+
+
+# Las dos puntas del revivir: avisar que empezaste y avisar que soltaste. Son
+# eventos discretos, así que van por RPC. Lo que NO se manda por RPC es el
+# progreso: ese lo lleva el host y baja replicado, porque cambia todos los frames
+# (docs/netcode.md → "Herramientas de Godot").
+#
+# Acá no se chequea nada más que "hay alguien caído": si está lejos, si el que
+# pide está vivo, o si en v0.3 le falta la venda lo decide el host en
+# world.gd::_can_revive(). El cliente no conoce ninguna regla.
+func _update_revive_input() -> void:
+	if Input.is_action_just_released("revive"):
+		_world.request_revive_stop.rpc_id(1)
+		return
+	if not Input.is_action_just_pressed("revive"):
+		return
+
+	var target: Player = _nearest_downed_player()
+	if target == null:
+		return
+	_world.request_revive_start.rpc_id(1, target.name.to_int())
+
+
+# El caído más cercano, o null si no hay ninguno. Sin filtro de distancia a
+# propósito: el rango es un número del host, y tenerlo también acá serían dos
+# fuentes de verdad que se desincronizan apenas una de las dos cambie.
+func _nearest_downed_player() -> Player:
+	var best: Player = null
+	var best_distance: float = INF
+	for other: Player in get_tree().get_nodes_in_group("players"):
+		if other == self:
+			continue
+		var stats: PlayerStats = other.get_node_or_null("Stats") as PlayerStats
+		if stats == null or not stats.is_downed:
+			continue
+		var distance: float = global_position.distance_to(other.global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = other
+	return best
+
+
+# Caído: seguís cayendo por gravedad pero no caminás ni saltás. La mirada NO se
+# toca a propósito —_unhandled_input() sigue igual—, así el caído puede mirar
+# alrededor y ver si alguien viene a levantarlo.
+func _move_downed(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	velocity.x = 0.0
+	velocity.z = 0.0
 	move_and_slide()
 
 

@@ -118,10 +118,13 @@ inventario es una tarea propia con su propio presupuesto de tiempo, no un detall
 tarea de inventario. Si el diseño del inventario se elige asumiendo que la replicación es
 gratis, se elige mal.
 
-## Los dos patrones
+## Los tres patrones
 
-Todo el código de red del proyecto entra en uno de estos dos moldes. Si estás escribiendo
+Todo el código de red del proyecto entra en uno de estos tres moldes. Si estás escribiendo
 algo que no encaja en ninguno, pará y preguntá antes de seguir.
+
+*(Eran dos hasta el paso 6 de v0.2. El tercero apareció al implementar el respawn: hacía
+falta que el host moviera un cuerpo que no es suyo.)*
 
 ### 1. Movimiento propio — el cliente manda
 
@@ -157,6 +160,48 @@ Flags de `@rpc`:
 - `"call_local"` — se ejecuta también en quien la llamó
 - `"reliable"` — garantiza entrega. Usar por defecto. `"unreliable"` solo para cosas que
   se mandan constantemente y da igual perder alguna
+
+### 3. La orden del host al dueño del cuerpo
+
+Para cuando el host decide algo sobre el cuerpo de un cliente. Hoy hay un solo caso —el
+respawn— pero va a haber más: teletransportes, empujones, que un zombie te agarre.
+
+**El host no puede escribirle la posición a un cuerpo que no es suyo.** El
+`MultiplayerSynchronizer` replica desde la autoridad hacia afuera, y la autoridad del
+cuerpo es el peer dueño: si el host escribe `player.global_position`, el cliente se la pisa
+en el tick siguiente con la suya. Entonces el host no mueve el cuerpo, **le ordena al dueño
+que se mueva**:
+
+```gdscript
+# En world.gd. La manda el host; corre en la máquina del dueño, que se mueve a sí
+# mismo y replica hacia afuera como siempre.
+@rpc("authority", "call_local", "reliable")
+func respawn_at(point: Vector3) -> void:
+    var player: Player = _players.get_node_or_null(
+        NodePath(str(multiplayer.get_unique_id()))
+    ) as Player
+    if player == null:
+        return
+    player.teleport_to(point)   # método normal, no RPC
+
+# host: respawn_at.rpc_id(peer_id, point)
+```
+
+**La trampa, y es fácil de comer:** `"authority"` significa *"solo la autoridad de **este
+nodo** puede llamarla"*, no *"solo el host"*. Verificado en la doc de 4.7
+(`MultiplayerApi.RPCMode`): `RPC_MODE_AUTHORITY` restringe la llamada a la autoridad actual
+del nodo, que es el host **solo si nadie la reasignó**.
+
+Por eso esta RPC va en `world.gd` y no en `player.gd`. La autoridad de `World` es el peer 1
+en las tres máquinas; la de `player.gd` es el **cliente dueño**, así que declarada ahí el
+flag diría lo contrario de lo que queremos y el host no podría llamarla nunca.
+
+> **Regla práctica: una RPC con `"authority"` solo hace lo que parece si está en un nodo
+> cuya autoridad no se reasigna.** En cualquier nodo con autoridad de cliente, va
+> `"any_peer"` y se valida `get_remote_sender_id() == 1` a mano.
+
+El método que toca el transform (`teleport_to()`) vive en `player.gd` y es una función
+normal. La RPC solo elige la máquina; quién escribe el cuerpo sigue siendo su dueño.
 
 ## El patrón del modificador: el host manda el número, el cliente lo aplica
 
@@ -377,8 +422,9 @@ se suele olvidar.
 **Objetivo:** un zombie que persigue por NavMesh y pega. Vida del jugador, caído, revivir,
 muerte y respawn. Todo el daño resuelto en el host.
 
-**v0.2 suma dos RPCs del patrón 2:** el daño y `request_revive`. Los dos validan en el host
-y los dos usan la posición ya replicada, nunca una que mande el cliente. (Son los dos
+**v0.2 suma tres RPCs del patrón 2** —el daño, `request_revive_start` y
+`request_revive_stop`— **y el primero del patrón 3**, `respawn_at`. Los del patrón 2 validan
+en el host y usan la posición ya replicada, nunca una que mande el cliente. (Son los
 primeros de *gameplay*; el primero del proyecto es el handshake de spawn de v0.1.)
 
 ### El orden, y qué depende de qué
@@ -419,27 +465,65 @@ daño. Reasignar las stats al host explícitamente, o pasar `recursive = false`.
 Las tres cosas son del host. El cliente solo respeta su propio flag de caído y deja de leer
 input (ver "El estado caído no reasigna autoridad").
 
-**Revivir es el segundo RPC del patrón 2:**
+**Revivir es mantener la tecla, y son dos RPCs, no uno.** *(Ajustado al implementarlo: este
+doc suponía un `request_revive` de un solo disparo.)* Mantener una tecla es un estado que
+dura, y mandarlo por RPC cada frame está prohibido más arriba. Entonces se mandan los dos
+**bordes** —empecé, solté— y el progreso lo lleva el host:
 
 ```gdscript
-# En el host. El cliente pide; el host valida contra su propio estado.
 @rpc("any_peer", "call_local", "reliable")
-func request_revive(target_peer_id: int) -> void:
-    if not multiplayer.is_server():
-        return
-    var sender_id: int = multiplayer.get_remote_sender_id()
-    # validar, en este orden:
-    # 1. ¿el target existe y está caído?
-    # 2. ¿el que pide está vivo? (un caído no levanta a otro caído)
-    # 3. ¿están a menos de X metros?
+func request_revive_start(target_peer_id: int) -> void:
+@rpc("any_peer", "call_local", "reliable")
+func request_revive_stop() -> void:
 ```
+
+`request_revive_stop()` **no lleva a quién estaba levantando**: el host ya lo sabe, y así un
+cliente no puede cortarle el revivir a otro.
+
+El progreso (0 a 1) vive en el nodo de stats **del caído** y baja replicado, que es lo que
+hace que el caído vea que lo están levantando. El host lo avanza y **revalida entero cada
+frame**: eso cubre alejarse, que al que levanta lo tiren, y que se desconecte a mitad de
+camino, sin escribir un caso especial para cada uno.
+
+**Todas las condiciones viven en una sola función del host**, `_can_revive()`, y el cliente
+no conoce ninguna: solo pide. Es a propósito — en v0.3, "el que levanta necesita una venda"
+se agrega adentro de esa función y no se toca ni una línea del cliente.
+
+```gdscript
+func _can_revive(healer: Node3D, target: Node3D) -> bool:
+    # 1. ¿el target está caído?
+    # 2. ¿el que levanta está de pie? (un caído no levanta a otro caído)
+    # 3. ¿están a menos de REVIVE_RANGE?
+    # v0.3: 4. ¿el que levanta tiene una venda?
+```
+
+Levantarse a uno mismo queda descartado sin chequearlo aparte: si estás caído no pasás el
+punto 2, y si no lo estás no pasás el punto 1.
 
 **La validación de distancia la hace el host con las posiciones que ya tiene replicadas**,
 no con una distancia que mande el cliente. Es exactamente el límite de la excepción de
 movimiento: el cliente decide dónde está, el host decide qué implica estar ahí.
 
+**Ni el timer del caído ni el revivir se guardan en un diccionario de `world.gd`.** El
+countdown vive adentro del nodo de stats de cada jugador, y el revivir se recorre iterando
+los hijos vivos de `Players`. Los dos por la misma razón: cuando un peer se desconecta, su
+jugador se libera, y un diccionario quedaría apuntando a un nodo que ya no existe. Es
+justamente lo que mide el criterio de terminado de abajo.
+
 El timer de 60 segundos también corre en el host. Si corriera en cada cliente, dos máquinas
 con latencias distintas llegarían a cero en momentos distintos.
+
+**Y se congela mientras alguien te está levantando.** *(Salió del playtest: hasta entonces
+seguía bajando y se podía morir a mitad de un revivir que iba a completarse.)* Es lo que
+hace que quedarte con un segundo todavía tenga salida — si el otro llega y mantiene la
+tecla, el reloj se para; si suelta, morís al instante. Sin eso, tardar en llegar castiga al
+que salva incluso cuando llegó a tiempo.
+
+El chequeo va contra `reviver_id` y no contra `revive_progress`, porque el progreso arranca
+en 0 y el primer frame de cada revivir seguiría descontando. El orden sale solo del árbol:
+`world.gd` es el padre, así que su `_process()` corre antes y, si el que levanta soltó o se
+alejó, `reviver_id` ya volvió a 0 cuando el timer mira — o sea que el reloj sigue el mismo
+frame, no el siguiente.
 
 ### El respawn tiene que caer sobre el NavMesh
 
@@ -465,17 +549,38 @@ alucina:
 **Lo que la firma implica y hay que manejar:** `map_get_closest_point` devuelve un
 `Vector3`, no un `bool`. **No falla nunca**: siempre devuelve el punto más cercano del
 NavMesh, esté a 10 cm o a 40 metros. Así que "validar que el punto sea navegable" no es
-preguntarle a la función, es comparar:
+preguntarle a la función, es comparar la distancia contra un umbral.
+
+**Y esa distancia se mide en horizontal, no en 3D.** *(Corregido al implementarlo: la
+versión anterior de este doc comparaba `snapped.distance_to(wanted_point)` y no habría
+funcionado.)*
+
+El NavMesh horneado de `yard.tscn` queda **0.3 m por encima del piso**: sus vértices están
+en `y = 0.3` y la cara de arriba del `Floor` en `y = 0.0`. O sea que una distancia en 3D
+**nunca baja de 0.3 m**, ni parado en medio del patio, y un umbral chico dispararía el
+respaldo siempre. Medir solo en x/z además es lo que "me respawneó del otro lado del mapa"
+significa de verdad.
 
 ```gdscript
-if snapped.distance_to(wanted_point) > MAX_RESPAWN_SNAP:
+var horizontal: float = Vector2(
+    snapped_point.x - fallen_at.x,
+    snapped_point.z - fallen_at.z,
+).length()
+if horizontal > MAX_RESPAWN_SNAP:
     # demasiado lejos: usar un punto de respawn de respaldo
 ```
 
 Sin ese chequeo, morir en un lugar sin NavMesh cerca te respawnea pegado al polígono más
-próximo, que puede estar del otro lado del mapa. *(Esto último es inferencia de la firma,
-no está verificado corriendo el juego — cuando se implemente, probarlo a propósito muriendo
-arriba de algo.)*
+próximo, que puede estar del otro lado del mapa.
+
+**Ese mismo offset de 0.3 m resuelve el "enterrado o flotando":** el punto snapeado cae
+siempre **por encima** de la superficie caminable, nunca adentro, así que no hay forma de
+aparecer enterrado. Aparecés 0.3 m en el aire y la gravedad te apoya en ~0.25 s.
+
+Verificado corriendo 4.7.1 sobre el greybox actual: muriendo en el centro del patio el
+punto snapeado da `y = 0.300` exacto, y un segundo después el cuerpo queda en `y = 0.0001`
+con `is_on_floor()` en `true`. Muriendo en `(100, _, 100)` —fuera del patio— la distancia
+horizontal da 99.70 m y dispara el respaldo.
 
 `map_force_update()` existe y es la salida si una consulta devuelve resultados viejos
 porque el mapa todavía no se sincronizó. **Su semántica exacta no la verificamos:** si
