@@ -8,11 +8,22 @@ paths:
 Reglas operativas. El porqué de cada una está en `docs/proceso.md` §1 — leerlo antes de
 escribir cualquier mensaje de commit.
 
-## Claude Code no commitea solo. Nunca.
+## Claude Code no commitea por iniciativa propia
 
 El commit es el punto donde ellos revisan el diff. Automatizarlo elimina el único control
-de calidad del proyecto. Preparar el mensaje sí; ejecutar `git commit` solo si lo piden
-explícitamente en ese momento.
+de calidad del proyecto.
+
+**El default es preparar el mensaje y parar ahí.** Terminar una tarea no habilita a
+commitearla. Ni "ya que estamos", ni porque el cambio sea chico, ni porque los tests pasen,
+ni porque el commit anterior lo hayan pedido.
+
+**Ejecutar `git commit` solo cuando lo piden explícitamente en ese momento** —"commiteá
+esto", "hacelo vos", "el commit hacelo vos". La autorización vale para ese pedido y se
+termina ahí: no se hereda a la tarea siguiente ni a la próxima sesión.
+
+Si en ese mismo pedido hay más de un cambio lógico, la autorización cubre todos los commits
+que hagan falta para separarlos bien. **Un commit = un cambio lógico** sigue mandando; que
+lo hayan pedido no es excusa para meter todo junto.
 
 ## Un commit = un cambio lógico
 
