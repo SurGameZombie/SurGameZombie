@@ -46,6 +46,13 @@ var _target: Node3D = null
 var _attack_cooldown_left: float = 0.0
 var _repath_left: float = 0.0
 
+# Si este frame pedimos una velocidad esquivada. velocity_computed se emite en
+# TODOS los frames mientras avoidance esté prendido, hayamos pedido algo o no.
+# Sin esta bandera, el handler llamaría move_and_slide() también en el cliente
+# —donde el _physics_process está apagado a propósito— y en los frames en que el
+# zombie decidió quedarse quieto.
+var _wants_avoidance_move: bool = false
+
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
 
 
@@ -56,6 +63,11 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	# Con avoidance prendido el agente no devuelve la velocidad de una: la calcula
+	# el NavigationServer y la manda por acá, más tarde en el mismo frame. O sea
+	# que move_and_slide() se llama desde el handler, no desde _physics_process().
+	_agent.velocity_computed.connect(_on_velocity_computed)
+
 	# Arranca apagado en las dos puntas y solo el host lo vuelve a prender. En el
 	# cliente, simular sería pelearle el transform al Synchronizer.
 	set_physics_process(false)
@@ -140,6 +152,8 @@ func _move(delta: float) -> void:
 		_stop(delta)
 		return
 
+	# La gravedad se aplica acá y no en el handler porque allá no llega el delta.
+	# velocity.y sobrevive hasta que el handler escriba x y z.
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
@@ -147,9 +161,24 @@ func _move(delta: float) -> void:
 	# posición del jugador: es acá donde el NavMesh hace que rodee las paredes.
 	var next_point: Vector3 = _agent.get_next_path_position()
 	var direction: Vector3 = global_position.direction_to(next_point)
-	velocity.x = direction.x * move_speed
-	velocity.z = direction.z * move_speed
 	_face(next_point)
+
+	# El NavMesh rodea lo que estaba horneado; el avoidance rodea lo que apareció
+	# después, como el cuerpo de un jugador caído. Por eso no se escribe velocity
+	# directo: se pide la velocidad que QUEREMOS y el agente devuelve la que
+	# realmente esquiva, por velocity_computed.
+	_wants_avoidance_move = true
+	_agent.set_velocity(Vector3(direction.x * move_speed, 0.0, direction.z * move_speed))
+
+
+# La velocidad ya esquivada que devuelve el NavigationServer. Es el único lugar
+# donde el zombie se mueve cuando está persiguiendo.
+func _on_velocity_computed(safe_velocity: Vector3) -> void:
+	if not _wants_avoidance_move:
+		return
+	_wants_avoidance_move = false
+	velocity.x = safe_velocity.x
+	velocity.z = safe_velocity.z
 	move_and_slide()
 
 

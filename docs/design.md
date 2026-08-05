@@ -115,8 +115,10 @@ distintos.
   suelta la tecla. Así quedarte con un segundo todavía tiene salida: si alguien llega y
   mantiene, hay tiempo; si suelta, morís al instante. La tensión queda en el momento que
   importa en vez de castigar al que salva por haber tardado en llegar.
-  **El zombie no ataca a un caído:** va por el que está parado. Eso es lo que pone el
-  riesgo en el que se agacha a levantar y no en el que ya está en el piso.
+  **El zombie no ataca a un caído, pero el cuerpo sigue estorbando:** va por el que está
+  parado y **rodea** al caído en vez de atravesarlo. Eso pone el riesgo en el que se
+  agacha a levantar y no en el que ya está en el piso, sin que un cuerpo tirado sea un
+  fantasma.
   **En v0.3 revivir va a requerir un item médico**, y la vida que devuelve va a depender
   de cuál se usó — de ahí que 30 sea un número y no *la* regla.
   En red, el cuerpo sigue siendo del cliente estando caído: el host decide que caíste y el

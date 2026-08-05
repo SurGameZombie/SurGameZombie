@@ -51,6 +51,7 @@ radius = 0.4
 height = 1.8
 path_desired_distance = 0.5
 target_desired_distance = 1.0
+avoidance_enabled = true
 debug_enabled = true
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]

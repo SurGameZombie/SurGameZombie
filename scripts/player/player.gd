@@ -49,6 +49,11 @@ extends CharacterBody3D
 
 @onready var _world: Node = get_node(world_path)
 
+## Lo que hace que el zombie rodee tu cuerpo en vez de trabarse contra él. Solo
+## se prende estando caído: si estuviera prendido siempre, el zombie esquivaría
+## también al jugador que persigue y nunca llegaría a morderlo.
+@onready var _obstacle: NavigationObstacle3D = $NavigationObstacle3D
+
 
 # La autoridad NO se replica sola: cada máquina la deduce del nombre del nodo.
 # El host nombra a cada jugador con el ID de su peer ("1", "1043872"), el nombre
@@ -99,6 +104,18 @@ func _ready() -> void:
 	# Captura el mouse: se esconde el cursor y el movimiento pasa a ser relativo
 	# e infinito, sin chocar contra el borde de la pantalla.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+# Corre en TODAS las máquinas, sin gate de autoridad, y eso es el punto: el que
+# necesita el obstáculo prendido es el HOST, porque es donde el zombie navega, y
+# el cuerpo de un cliente caído en la máquina del host es una instancia que no es
+# autoridad suya. is_downed baja replicado, así que las tres llegan a lo mismo.
+#
+# Se compara antes de asignar porque esto corre todos los frames y el setter
+# registra y desregistra el obstáculo en el NavigationServer.
+func _process(_delta: float) -> void:
+	if _obstacle.avoidance_enabled != _stats.is_downed:
+		_obstacle.avoidance_enabled = _stats.is_downed
 
 
 func _unhandled_input(event: InputEvent) -> void:
