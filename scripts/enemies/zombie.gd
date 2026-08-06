@@ -31,7 +31,15 @@ const NAVMESH_SYNC_FRAMES: int = 10
 ## campo abierto, no doblando ni entre obstáculos.
 @export var move_speed: float = 3.7
 
-## Cuánta vida saca cada mordida.
+## Cuánta vida saca cada mordida. PROVISORIO: salió de que 10 es un número redondo, no
+## de jugarlo.
+##
+## Contra 100 de vida y 1.5 s de cooldown son diez mordidas, o sea ~13.5 s de contacto
+## continuo para tirar a alguien. Eso es cuánto perdona el enemigo, que es una decisión
+## de balance central del juego y todavía no la tomó nadie.
+##
+## NO copiarlo a docs/design.md hasta que se juegue: ese doc es donde ellos registran lo
+## que decidieron ellos, y un número inventado ahí adentro se lee igual que uno decidido.
 @export var attack_damage: float = 10.0
 
 ## Cuánto espera entre una mordida y la siguiente, en segundos. Sin esto muerde

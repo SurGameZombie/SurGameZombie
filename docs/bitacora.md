@@ -370,6 +370,18 @@ no un feature que se agrega.
 
 ## Registro
 
+**[6/8/2026]** — **Tres decisiones que ya estaban tomadas y no estaban escritas.** Salen de
+la retrospectiva §3.6, que las encontró como huecos sin anotar justo antes del playtest de
+v0.2.
+
+**El daño de mordida es provisorio y NO entra a `docs/design.md`.** Diez de daño contra 100
+de vida con 1.5 s de cooldown son diez mordidas, ~13.5 s de contacto continuo para tirar a
+alguien: eso es cuánto perdona el enemigo, que es balance central, y salió de que 10 es un
+número redondo. Queda marcado en el `@export` de `zombie.gd`, pegado al número, y no en el
+doc de diseño **a propósito**: ningún número de gameplay entra a `design.md` en el mismo
+commit que lo implementa, porque ahí adentro se lee igual que los que decidieron ellos
+(retrospectiva §1.E1). Entra el día que se juegue y salga del playtest.
+
 **[5/8/2026]** — **Paso 6 de v0.2: caído, revivir y respawn.** Con esto v0.2 queda escrita
 entera y solo falta el playtest de dos instancias. Entró en cuatro commits, uno por pedazo,
 y cada uno se verificó con un smoke test headless descartable antes de pasar al siguiente.
