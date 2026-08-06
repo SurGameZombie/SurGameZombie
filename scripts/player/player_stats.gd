@@ -32,7 +32,10 @@ const HOST_PEER_ID: int = 1
 @export var downed_duration: float = 60.0
 
 ## Vida actual. La escribe el host y baja replicada; el cliente solo la lee.
-var health: float = 100.0
+##
+## Arranca en 0 y la llena _ready() con max_health. El porqué de que no se
+## inicialice acá está en _ready().
+var health: float = 0.0
 
 ## Caído: la vida llegó a 0 pero todavía no moriste de verdad. Lo decide el host
 ## y baja replicado. El cliente lo lee para dejar de moverse, y eso es todo lo
@@ -65,6 +68,19 @@ var reviver_id: int = 0
 # y escala solo cuando en v0.4 aparezcan más nodos de estado del host.
 func _enter_tree() -> void:
 	set_multiplayer_authority(HOST_PEER_ID)
+
+
+# La vida arranca llena, y se fija acá y no en la declaración de la variable
+# porque los valores de @export de un .tscn se aplican DESPUÉS de construir el
+# objeto: un `var health: float = max_health` se quedaría con el 100.0 del
+# script, y subir max_health desde el Inspector no cambiaría con cuánta vida
+# arrancás. Que es justo lo que se quiere poder probar.
+#
+# Corre en las tres máquinas y no solo en el host a propósito: el cliente lo pisa
+# en cuanto llega el primer paquete del Synchronizer, y mientras tanto muestra la
+# vida llena en vez de 0.
+func _ready() -> void:
+	health = max_health
 
 
 # El timer del caído corre SOLO en el host. Si corriera en cada cliente, dos
