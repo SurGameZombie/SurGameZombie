@@ -177,6 +177,13 @@ esa lista quedó vieja porque el plan se escribió **antes** de compararlos de v
 
 Registra un autoload `_mcp_game_helper` en `project.godot`. Es esperado, no un accidente.
 
+**Vision Routing queda apagado, y eso es una decisión, no un default que nadie miró.** Desde
+la 3.1.2 el plugin trae `vision_routing.gd`: con eso habilitado, cada screenshot del editor
+o del juego se manda a un proveedor externo —Groq, Google o xAI, con API key propia— y vuelve
+como una descripción de texto en vez de la imagen. Viene apagado de fábrica y sin key no hace
+nada, y el 6/8/2026 se decidió dejarlo así: las capturas de este proyecto no salen de la
+máquina. Si alguna vez se prende, se anota acá con qué proveedor quedó configurado.
+
 ### Tooling: Context7 como MCP de documentación
 
 Agregado el 2026-08-05, en `.mcp.json` en la raíz del repo.
