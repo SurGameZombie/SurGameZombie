@@ -6,8 +6,8 @@ extends CanvasLayer
 ## haya nada que quite vida.
 ##
 ## Todo el andamio está en este archivo a propósito: cuando entre el HUD de
-## verdad se borran el script, el nodo de world.tscn y las acciones debug_hurt y
-## debug_hurt_invalid, y no queda nada suelto.
+## verdad se borran el script, el nodo de world.tscn y las acciones debug_hurt,
+## debug_hurt_invalid y debug_pause_zombies, y no queda nada suelto.
 
 ## Un peer que no existe. Sirve para pedirle al host daño sobre un jugador
 ## inventado y ver que lo rechaza.
@@ -24,6 +24,10 @@ const GHOST_PEER_ID: int = 999999
 
 ## El contenedor de zombies. Mismo motivo.
 @export var zombies_root_path: NodePath = ^"../Zombies"
+
+## Si los zombies están congelados por F3. Vive acá y no adentro del zombie
+## porque es estado del andamio: se borra junto con este archivo.
+var _zombies_paused: bool = false
 
 @onready var _label: Label = $StatsLabel
 @onready var _players_root: Node3D = get_node(players_root_path)
@@ -49,6 +53,43 @@ func _unhandled_input(event: InputEvent) -> void:
 		_world.request_damage.rpc_id(1, multiplayer.get_unique_id())
 	elif event.is_action_pressed("debug_hurt_invalid"):
 		_send_invalid_requests()
+	elif event.is_action_pressed("debug_pause_zombies"):
+		_toggle_zombie_pause()
+
+
+# Congela a los zombies y nada más. Apaga su _physics_process, que es donde
+# corre toda su IA: sin él no repathea, no pide velocidad y no llama a
+# move_and_slide(), así que se queda donde está.
+#
+# NO usa get_tree().paused a propósito: eso frenaría el árbol entero, jugadores
+# incluidos, y lo que hace falta al testear es exactamente lo contrario —
+# caminar tranquilo con los zombies quietos, para mirar geometría, NavMesh o el
+# cuerpo de un caído sin que te muerdan mientras.
+#
+# Corre SOLO en el host porque la IA vive ahí (docs/netcode.md → "La regla"). En
+# el cliente el _physics_process del zombie ya está apagado a propósito, así que
+# apretar F3 allá no tiene nada que apagar: avisa por consola y no hace nada. Es
+# correcto, no un bug.
+#
+# OJO PARA v0.5: esto recorre los zombies que existen en el momento de apretar la
+# tecla, así que uno que spawnee DESPUÉS de pausar arranca en marcha y no hereda
+# el estado. Hoy da igual —hay un solo zombie fijo, puesto por world.gd— pero
+# cuando entre el sistema de spawn real la pausa va a quedar a medias sin que
+# nada avise. La solución es al revés de esta: que el zombie consulte el estado
+# de pausa al entrar al árbol, en vez de que la pausa vaya a buscar a los
+# zombies.
+func _toggle_zombie_pause() -> void:
+	if not multiplayer.is_server():
+		print("[debug] F3 solo hace algo en el host: la IA del zombie corre ahí")
+		return
+
+	_zombies_paused = not _zombies_paused
+	for zombie: Zombie in _zombies_root.get_children():
+		zombie.set_physics_process(not _zombies_paused)
+	print("[debug] zombies %s (%d en la escena)" % [
+		"PAUSADOS" if _zombies_paused else "en marcha",
+		_zombies_root.get_child_count(),
+	])
 
 
 # Los dos pedidos que el host tiene que rechazar, uno por cada validación.
@@ -77,8 +118,11 @@ func _other_peer_id() -> int:
 
 func _build_text() -> String:
 	var role: String = "host" if multiplayer.is_server() else "cliente"
+	# El estado de pausa va en pantalla y no solo en la consola: sin esto,
+	# "los zombies no se mueven" se ve igual que un bug de IA.
+	var paused_mark: String = "   [F3: ZOMBIES PAUSADOS]" if _zombies_paused else ""
 	var lines: PackedStringArray = PackedStringArray([
-		"soy %d (%s)" % [multiplayer.get_unique_id(), role],
+		"soy %d (%s)%s" % [multiplayer.get_unique_id(), role, paused_mark],
 	])
 	# Todos los jugadores, no solo el propio: es lo que hace comparables las dos
 	# pantallas de un vistazo.
