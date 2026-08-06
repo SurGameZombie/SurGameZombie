@@ -336,6 +336,22 @@ Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
       presupuestado en `docs/plan.md` (el número en v0.5, la pose y la animación en v0.6),
       con el dato antropométrico ya anotado ahí.
 
+- [x] **¿Al zombie se lo puede matar? Cerrado el 6/8/2026: todavía no, y recién en v0.5.**
+      Es scope, no un olvido.
+
+      Hoy no existe ninguna fuente de daño del jugador. Lo único que baja vida es
+      `request_damage()`, un andamio del overlay de debug que se borra cuando entre el HUD.
+      Matarlo antes de v0.5 obliga a inventar un melee sin arma que no está presupuestado
+      en ningún milestone, o sea meter una mecánica de combate abajo del milestone
+      equivocado — lo mismo que ya se evita dejando los items de v0.3 inertes.
+
+      **La vida del zombie entra en v0.5, con el bate y la pistola** (`docs/plan.md`).
+      Hasta entonces la presión es escaparse, no pelear, que es exactamente lo que dice
+      "Qué NO es": el combate es escaso, torpe y peligroso.
+
+      Importa antes del playtest de v0.2: quien juegue esperando poder pelear va a reportar
+      como bug algo que es scope.
+
 - [ ] **Dos jugadores levantando al mismo caído: hoy el segundo pisa al primero.** Anotado
       al terminar v0.2, sin implementar.
 
