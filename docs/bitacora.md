@@ -14,11 +14,11 @@ código —modelo de autoridad, primera o tercera persona, idioma del código—
 Cómo se resuelven v0.1 **y v0.2** —paso a paso, con las dependencias marcadas— está escrito
 en `docs/netcode.md`.
 
-**v0.1 y v0.2 están escritas y falta jugarlas.** Red, character controller, mundo, zombie,
-daño, caído, revivir y respawn están conectados. Lo que falta en las dos es el mismo
-playtest de host + cliente en dos instancias, que es el criterio de terminado real
-(`docs/netcode.md`). El paso 6 de v0.2 está verificado con smoke tests headless, que no son
-lo mismo que jugarlo.
+**v0.2 está cerrada de verdad.** El 6/8/2026 se jugó el playtest de quince minutos sin
+código a la vista y salió bien, así que el milestone cumple por fin su propio criterio de
+terminado: no "los tests pasan" ni "está escrito", sino jugado de punta a punta. Red,
+character controller, mundo, zombie, daño, caído, revivir y respawn están conectados **y
+probados jugando**. Detalle en el Registro.
 
 **Pendiente antes de escribir código:** tutorial oficial 3D de Godot, los dos.
 Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
@@ -366,7 +366,9 @@ no un feature que se agrega.
 - [ ] Dibujar el mapa en papel
 - [ ] **Playtest de quince minutos sin código a la vista, por cada milestone.** Jugarlo,
       no revisarlo. Es la versión barata del "testigo independiente": el sesgo de
-      autoevaluación no se corrige leyendo el propio diff
+      autoevaluación no se corrige leyendo el propio diff.
+      **v0.2: hecho el 6/8/2026, sin bugs nuevos.** Sigue abierto porque es por milestone:
+      v0.3 tiene el suyo
 - [ ] **Al tercer mes, revisar si la velocidad de avance cayó.** Está medido que con IA la
       velocidad sube fuerte el mes 1, la mitad el mes 2 y vuelve a cero el mes 3, mientras
       la complejidad queda +41% permanente (`docs/investigacion-claude-code.md`). Si lo
@@ -376,6 +378,23 @@ no un feature que se agrega.
 ---
 
 ## Registro
+
+**[6/8/2026]** — **Se jugó el playtest de v0.2 y v0.2 quedó cerrada.** Quince minutos, los
+dos, sin código a la vista, como manda la regla operativa 5 de
+`docs/investigacion-claude-code.md`. **Salió bien: ningún bug nuevo.** Es la primera vez que
+un milestone de este proyecto cumple su criterio de terminado real — v0.1 y v0.2 venían
+declaradas "escritas y sin jugar" desde que se escribieron, y esa deuda queda saldada.
+
+Lo único que se notó fue una ausencia, no una falla: **F3 no pausaba a los zombies.**
+Buscado en el historial, F3 **nunca existió en el repo** — no hay commit que lo agregue ni
+que lo saque, el `[input]` de `project.godot` tuvo siempre las mismas nueve acciones, y no
+hay ni un `get_tree().paused` en `scripts/`. Lo que se recordaba era casi seguro la pausa
+general: la del debugger de Godot, o la que el MCP usa al inspeccionar el árbol. Las dos
+frenan todo, zombies incluidos, y desde el lado del que juega se ven igual que un atajo.
+**Ahora sí existe como atajo real:** `debug_pause_zombies` en F3, que congela **solo** a los
+zombies —apagando su `_physics_process`, no el árbol entero— y solo hace algo en el host,
+que es donde vive la IA. Es andamio de debug: se borra junto con el overlay cuando entre el
+HUD.
 
 **[6/8/2026]** — **Tres decisiones que ya estaban tomadas y no estaban escritas.** Salen de
 la retrospectiva §3.6, que las encontró como huecos sin anotar justo antes del playtest de
