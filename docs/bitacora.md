@@ -343,8 +343,8 @@ no un feature que se agrega.
       1. Si el inventario de v0.3 usa `expressobits/inventory-system` o se escribe. Se
          responde **en v0.3**, verificando si el addon replica en red solo o si hay que
          serializar a `PackedByteArray` igual
-      2. **Vendas:** falta decidir si la vida se regenera sola o solo con items. Hasta que
-         eso esté, las vendas no tienen dónde enchufarse
+      2. **Vendas:** curar entra en **v0.4** (decidido el 6/8/2026, ver `docs/plan.md`),
+         y con eso el límite de revivires. Sigue abierto si además la vida se regenera sola
       3. **Palanca:** no hay puertas ni contenedores trabados en el plan, así que no hay
          mecánica que la use
       4. **Qué entra al save**, tres cosas sin decidir (items tirados en el piso,
@@ -381,6 +381,16 @@ número redondo. Queda marcado en el `@export` de `zombie.gd`, pegado al número
 doc de diseño **a propósito**: ningún número de gameplay entra a `design.md` en el mismo
 commit que lo implementa, porque ahí adentro se lee igual que los que decidieron ellos
 (retrospectiva §1.E1). Entra el día que se juegue y salga del playtest.
+
+**La curación entra en v0.4, y eso significa que en v0.3 nadie muere de verdad todavía.**
+El límite de revivires depende de que exista curación —la regla es "cae, lo levantan, y
+vuelve a caer **sin haberse curado en el medio** dentro de los 10 minutos: la segunda caída
+mata directo"—, y la curación se puso en v0.4 para reusar el sistema de usar un item que
+restaura una stat que ese milestone construye igual para hambre y sed, en vez de escribirlo
+dos veces. **El costo está aceptado a propósito, no es un descuido:** durante todo v0.3 un
+dúo se sigue reanimando indefinidamente y la muerte real no llega nunca, así que el
+milestone del inventario se juega sabiendo que nadie muere. `docs/design.md` prometía el
+item médico para v0.3 y quedó corregido.
 
 **[5/8/2026]** — **Paso 6 de v0.2: caído, revivir y respawn.** Con esto v0.2 queda escrita
 entera y solo falta el playtest de dos instancias. Entró en cuatro commits, uno por pedazo,
@@ -421,7 +431,7 @@ dura. Como mandar estado por RPC cada frame está prohibido, se mandan los dos *
 caído**: por eso el caído ve que lo están levantando.
 
 **Todas las condiciones de revivir viven en una sola función del host, `_can_revive()`.** Es
-a propósito y mirando a v0.3: cuando revivir requiera una venda, se agrega una condición ahí
+a propósito y mirando a v0.4: cuando revivir requiera una venda, se agrega una condición ahí
 adentro y no se toca una línea del cliente, porque el cliente no conoce ninguna regla — solo
 pide. El host revalida entero cada frame, y eso cubre alejarse, que al que levanta lo tiren y
 que se desconecte a mitad de camino sin escribir un caso especial para cada uno.

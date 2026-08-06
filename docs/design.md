@@ -119,8 +119,11 @@ distintos.
   parado y **rodea** al caído en vez de atravesarlo. Eso pone el riesgo en el que se
   agacha a levantar y no en el que ya está en el piso, sin que un cuerpo tirado sea un
   fantasma.
-  **En v0.3 revivir va a requerir un item médico**, y la vida que devuelve va a depender
-  de cuál se usó — de ahí que 30 sea un número y no *la* regla.
+  **En v0.4 revivir va a requerir un item médico**, y la vida que devuelve va a depender
+  de cuál se usó — de ahí que 30 sea un número y no *la* regla. *(Este doc decía v0.3. Se
+  movió a v0.4 el 6/8/2026, junto con la curación: v0.4 es el milestone que construye
+  "usar un item que restaura una stat" para hambre y sed, y hacerlo un milestone antes es
+  escribir esa lógica dos veces.)*
   En red, el cuerpo sigue siendo del cliente estando caído: el host decide que caíste y el
   cliente respeta su propio flag dejando de leer input (`docs/netcode.md` → "El estado
   caído no reasigna autoridad").
@@ -270,7 +273,7 @@ confundir "el item está en el juego" con "el item hace algo":
 | Pistola 9mm | Arma de fuego | v0.5 |
 | Munición 9mm | Recarga de la pistola | v0.5 |
 | Linterna | Luz, y oscuridad que la justifique | v0.5, con el ciclo día/noche |
-| Vendas | Curar vida | **no registrado** |
+| Vendas | Curar vida | v0.4 |
 | Palanca | Abrir algo trabado | **no registrado** |
 
 **En v0.3 vendas, linterna y palanca son items inertes, y está bien que lo sean.** Los
@@ -280,14 +283,13 @@ diez, solo la mochila hace algo. **Es a propósito:** v0.3 prueba el inventario
 igual que uno que cura. Meter las mecánicas en el mismo milestone que el inventario es
 poner dos sistemas nuevos abajo del mismo bug.
 
-Los dos **no registrado** son huecos reales, no olvidos de redacción:
+**Las vendas salieron de "no registrado" el 6/8/2026:** curar entra en **v0.4**, con los
+consumibles de hambre y sed, y arrastra el límite de revivires (ver el hueco de abajo).
+Sigue abierto si además la vida se regenera sola con el tiempo.
 
-- **Vendas:** falta decidir si la vida se regenera sola o solo con items. Hasta que eso
-  esté, no hay dónde enchufarlas.
-- **Palanca:** hoy no hay puertas ni contenedores trabados en el plan. La palanca supone
-  una mecánica de acceso bloqueado que todavía no existe.
-
-Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
+**La palanca sigue en "no registrado", y es un hueco real, no un olvido de redacción:** hoy
+no hay puertas ni contenedores trabados en el plan, así que supone una mecánica de acceso
+bloqueado que todavía no existe. No bloquea nada: se decide cuando llegue.
 
 ## Huecos por completar
 
@@ -303,8 +305,8 @@ Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
       menos:** la serialización de red es tediosa, no pedagógica — escribirla a mano no
       enseña Godot, que era el motivo de escribir el character controller.
 
-- [ ] **Revivir no tiene límite de usos, y eso anula la tensión del sistema entero — se
-      responde en v0.3.** Anotado al terminar v0.2, sin implementar.
+- [x] **Revivir no tiene límite de usos. La regla quedó decidida el 6/8/2026 y se
+      implementa en v0.4**, junto con la curación. Sin implementar todavía.
 
       Hoy un dúo se puede reanimar indefinidamente: uno cae, el otro lo levanta, cae el
       otro, lo levanta el primero, y así para siempre. **Nadie muere nunca.** Todo lo que
@@ -312,16 +314,27 @@ Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
       segundos quieto al lado del cuerpo— se apoya en que en algún momento la muerte real
       llegue, y sin un límite no llega jamás.
 
-      **La idea a evaluar:** si un jugador muere de verdad más de una vez dentro de una
-      ventana de tiempo —por ejemplo 10 minutos—, la próxima vez **no queda caído: muere
-      directo**, sin oportunidad de que lo levanten. Así la primera muerte de una racha
-      perdona y la segunda no, y una noche que se está yendo al carajo se siente como que
-      se va al carajo.
+      **La regla:** si un jugador cae, lo levantan, y **vuelve a caer sin haberse curado en
+      el medio** dentro de los 10 minutos, la segunda caída no lo deja caído: **muere
+      directo**, sin oportunidad de que lo levanten. Si se curó, o si pasaron más de 10
+      minutos, vuelve a caer normal. **Curarse es lo que corta la racha**, y eso es lo que
+      la hace una regla de recursos y no un castigo por caerse dos veces.
 
-      Falta decidir: el largo de la ventana, cuántas muertes la disparan, si se avisa en
-      pantalla —y sobre todo **si la ventana se cuenta por jugador o para el grupo**. Va
-      en v0.3 y no antes porque ahí entra la muerte real con bolsa, que es cuando morir
-      empieza a costar algo por sí solo y se puede juzgar cuánto falta encima.
+      **Va en v0.4 y no en v0.3 porque necesita que exista la curación:** sin ella "sin
+      haberse curado" es siempre verdadero y la regla mataría siempre en la segunda caída.
+      El texto completo y el porqué del milestone están en `docs/plan.md` → v0.4.
+      *(Este hueco decía antes "se responde en v0.3", con otro disparador: "muere de verdad
+      más de una vez dentro de una ventana". El disparador real es la caída sin curarse en
+      el medio, no la muerte.)*
+
+      **Consecuencia aceptada a propósito: durante todo v0.3 nadie muere de verdad
+      todavía.** Se juega el milestone del inventario sabiendo eso.
+
+      Sigue sin decidir **si se avisa en pantalla** que estás adentro de la ventana. Lo
+      otro que figuraba como duda —si la ventana se cuenta por jugador o para el grupo—
+      queda por jugador, y eso **no es una decisión nueva**: es lo que ya sale de la
+      arquitectura, porque cada jugador tiene su propio estado de caído adentro de su nodo
+      de stats.
 
 - [x] **Un cuerpo caído tapa una puerta entera. Cerrado el 5/8/2026: no es un bug, es la
       mecánica.** Ver `docs/decisions/0008-horneado-del-navmesh-y-cuerpo-caido.md`.
@@ -375,7 +388,7 @@ Cada uno tiene que ser jugable de punta a punta antes de pasar al siguiente.
 | **v0.1** | Dos cápsulas sincronizadas moviéndose en una caja. Host + 1 cliente por IP en LAN. Nada más. |
 | **v0.2** | Un zombie que persigue por NavMesh y pega. Vida del jugador, muerte, respawn. |
 | **v0.3** | Inventario replicado, ~10 items, contenedores registrables, pickup y drop. |
-| **v0.4** | Hambre y sed drenando, consumibles, muerte por inanición, stamina al correr. |
+| **v0.4** | Hambre y sed drenando, consumibles, muerte por inanición, stamina al correr. Curación y límite de revivires. |
 | **v0.5** | Melee + arma de fuego con munición escasa. Spawn de zombies. Día/noche. Guardado. |
 | **v0.6 "Se ve"** | Pasada de arte sobre el greybox: familia visual, iluminación, post-processing, SFX. |
 | **v1.0 "Se juega con amigos"** | Conexión sin port forwarding, lobby, menús, nombre definitivo, balance final. |

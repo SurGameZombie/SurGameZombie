@@ -117,6 +117,11 @@ De los 10 items, en v0.3 solo la mochila hace algo; el resto entra inerte, a pro
 
 **v0.4 — "Duele"**
 Hambre y sed drenando con el tiempo. Comida y agua como items consumibles. Muerte por inanición. Stamina que se consume corriendo.
+**Acá entra la curación** —vendas / item médico— **y con ella el límite de revivires.** Va acá y no en v0.3 para reusar el mismo sistema de "usar un item que restaura una stat" que este milestone construye igual para hambre y sed, en vez de escribir esa lógica dos veces, un milestone antes y con otro dueño.
+**La regla del segundo caído, entera:** si un jugador cae, lo levantan, y **vuelve a caer sin haberse curado en el medio** dentro de los 10 minutos, la segunda caída no lo deja caído: **muere directo**, sin oportunidad de que lo levanten. En cualquier otro caso —si se curó, o si pasaron más de 10 minutos— vuelve a caer normal. Curarse es lo que corta la racha.
+*Por qué no se implementa antes:* hoy no existe ninguna curación, así que "sin haberse curado" sería **siempre** verdadero y la regla mataría siempre en la segunda caída. Es una regla que necesita que exista la salida que ofrece.
+*Consecuencia aceptada:* durante todo v0.3 nadie muere de verdad todavía. Un dúo se sigue reanimando indefinidamente el milestone entero.
+*Qué sigue sin decidir:* si se avisa en pantalla que estás adentro de la ventana. Que la ventana se cuente por jugador y no para el grupo **no es una decisión aparte**: cada jugador ya tiene su propio estado de caído en su nodo de stats, así que sale de la arquitectura que ya existe.
 
 **v0.5 — "Es un juego"**
 Un arma melee + un arma de fuego con munición escasa. Sistema de spawn/densidad de zombies. Ciclo día/noche. Guardado del estado del mundo en el host.
