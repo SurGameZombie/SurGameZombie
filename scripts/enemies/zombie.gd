@@ -14,6 +14,14 @@ enum State { CHASING, ATTACKING }
 
 const HOST_PEER_ID: int = 1
 
+## Cuántos frames de física esperar antes de empezar a simular, para que el
+## NavigationServer haya terminado de sincronizar su mapa.
+##
+## Medido sobre un world.tscn real: tarda 6 o 7, no uno. Se esperan diez para
+## dejar margen. El costo es que el zombie arranca quieto menos de dos décimas de
+## segundo, una sola vez, al cargar la escena.
+const NAVMESH_SYNC_FRAMES: int = 10
+
 ## Velocidad de persecución, en m/s. Salió de jugarlo: a 2.5 se sentía
 ## inofensivo (docs/design.md → "Velocidad del zombie: 3.7 m/s").
 ##
@@ -73,11 +81,20 @@ func _ready() -> void:
 	set_physics_process(false)
 	if not multiplayer.is_server():
 		return
-	# El NavigationServer sincroniza su mapa al final del primer frame de física.
-	# Pedirle un camino antes de eso devuelve vacío y el zombie arranca quieto.
-	await get_tree().physics_frame
-	if is_inside_tree():
-		set_physics_process(true)
+	# El NavigationServer no deja el mapa consultable al final del primer frame de
+	# física: tarda varios (NAVMESH_SYNC_FRAMES). Pedirle un camino antes devuelve
+	# vacío y el zombie se queda plantado hasta el repath siguiente.
+	#
+	# El is_inside_tree() de adentro del loop es porque entre await y await el
+	# zombie se puede haber liberado —cambio de escena, desconexión— y despertar
+	# sobre un nodo muerto.
+	var frames_left: int = NAVMESH_SYNC_FRAMES
+	while frames_left > 0:
+		await get_tree().physics_frame
+		if not is_inside_tree():
+			return
+		frames_left -= 1
+	set_physics_process(true)
 
 
 func _physics_process(delta: float) -> void:
