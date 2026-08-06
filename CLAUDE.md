@@ -121,6 +121,9 @@ jugador? Si no lo es, corre en el host.
 Estas instrucciones existen porque son los modos de falla documentados de los agentes en
 gamedev. No son sugerencias.
 
+Joaco programa y Mathi no: toda tarea que no requiera código va marcada como delegable a
+Mathi. Ver `.claude/rules/limites.md` → "Lo que no es tuyo".
+
 ### Preguntá antes de asumir
 
 Si un pedido admite más de una interpretación y elegir mal implica rehacer trabajo,
