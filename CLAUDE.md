@@ -38,17 +38,18 @@ usuario y usar `godot` directo.
 # editor abierto tiene una copia vieja" (ver docs/bitacora.md → Problemas).
 & $godot --headless --path . res://scenes/main/world.tscn --quit-after 90
 
-# Rehornear el NavMesh del greybox. CORRERLO SIEMPRE después de tocar la
-# geometría de scenes/main/yard.tscn: si no, el NavMesh queda con la forma vieja
-# y el zombie camina atravesando paredes nuevas. Sale con código 1 si falla.
+# Rehornear el NavMesh del greybox. CORRERLO SIEMPRE después de tocar la geometría
+# de scenes/main/yard.tscn, y después correr el skill barrido-navmesh: si no, hay
+# vanos que quedan sin NavMesh y el zombie no entra (ADR-0008). Sale con código 1.
 & $godot --headless --path . -s res://tools/bake_navmesh.gd
 ```
 
 `--import` es el flag correcto para verificar el proyecto: importa los recursos y sale.
 
-Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
+Tests (gdUnit4 **no está instalado** — entra en v0.3, ver `docs/plan.md`). Sin
+`--ignoreHeadlessMode` sale con código 103 y no corre nada:
 ```powershell
-& $godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --run-tests
+& $godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --ignoreHeadlessMode -a res://tests
 ```
 
 ## Estructura (única versión — `docs/plan.md` §5 apunta acá, no la repite)
@@ -58,7 +59,7 @@ Tests (gdUnit4 **todavía no está instalado** — ver `docs/bitacora.md`):
   `inventory/`, `world/`, `ui/`
 - `resources/` — datos como `.tres`: items, tipos de zombie, loot tables
 - `assets/` — `models/` (.glb), `textures/`, `audio/`
-- `tests/` — suites de gdUnit4
+- `tests/` — suites de gdUnit4, nombradas `*_test.gd` (`docs/plan.md` → v0.3)
 - `tools/` — scripts que se corren con `-s` desde línea de comandos, no son parte del
   juego. Hoy solo el horneado del NavMesh
 - `docs/` — `plan.md` (arquitectura, stack y milestones), `design.md` (qué es el juego),

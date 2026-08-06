@@ -162,6 +162,8 @@ inventados, no porque estén balanceados: el ajuste fino sale de jugarlo.
 | Greybox de v0.2 | 60 × 60 m |
 | Ancho de puerta industrial | 2.0 m |
 | Ancho de puerta interior | 1.4 m |
+| Vano mínimo navegable (regla de construcción) | 1.4 m |
+| `cell_size` del horneado del NavMesh | 0.10 m |
 | Contenedor de carga | 2.4 × 6 × 2.6 m |
 | Alto de nave industrial | 6 m |
 | Alto de oficina y muro perimetral | 3 m |
@@ -176,9 +178,22 @@ Notas de implementación, para la v0.1:
 - **1.8 m es la altura del cuerpo**, no la de la cámara. En primera persona la cámara va a
   la altura de los ojos, un poco más abajo: quedó fijada en **1.65 m**. Si se pone a 1.8
   se siente como flotar.
-- **El radio de 0.4 m** es el ancho de una persona. Define por dónde pasás: un pasillo de
-  menos de 0.8 m no se puede cruzar, y es el número contra el que hay que dimensionar
-  puertas e interiores cuando se greyboxee el complejo.
+- **El radio de 0.4 m** es el ancho de una persona. Define por dónde pasás **vos**: un
+  pasillo de menos de 0.8 m no se puede cruzar. Es una restricción de física y sigue siendo
+  cierta, pero **no alcanza para dimensionar el mapa.**
+- **Dimensionar vanos son dos restricciones, no una, y manda la segunda:**
+  **0.8 m para que pase el jugador, y 1.4 m para que el zombie pueda navegarlo.** El
+  horneado del NavMesh erosiona la superficie caminable desde cada borde, así que un vano
+  que el jugador cruza cómodo puede quedar sin un solo polígono de navegación y volverse
+  invisible para la IA. Pasó: los cuatro vanos de 1.4 m de la oficina estuvieron tapiados
+  para el zombie hasta que se midió. El piso duro medido es 1.2 m; **se construye contra
+  1.4**, que es lo que el mapa ya usa, para no quedar al filo.
+  El porqué completo, la fórmula y los números medidos están en
+  `docs/decisions/0008-horneado-del-navmesh-y-cuerpo-caido.md`. No se repiten acá.
+- **Un cuerpo caído tapa entera una puerta interior de 1.4 m**, caiga al costado o al
+  centro, y eso es a propósito: ni el zombie ni el compañero que viene a levantarte pasan.
+  **No aplica a los vanos de 2.0 m del galpón**, donde un cuerpo pegado a la jamba deja
+  pasar. Es la decisión 3 de ADR-0008.
 - **250 × 250 m** es el mapa terminado, no el de v0.1 (ver `docs/plan.md` →
   "Progresión del mapa"). A 4 m/s cruzarlo de punta a punta lleva poco más de un minuto:
   vacío sería chiquísimo, pero con loot, interiores y zombies alcanza para la sesión de
@@ -308,22 +323,18 @@ Ninguno de los dos bloquea nada: se pueden decidir cuando lleguen.
       en v0.3 y no antes porque ahí entra la muerte real con bolsa, que es cuando morir
       empieza a costar algo por sí solo y se puede juzgar cuánto falta encima.
 
-- [ ] **Un cuerpo caído tapa una puerta entera, y no debería tapar más que alguien
-      parado.** Anotado al terminar v0.2, sin implementar.
+- [x] **Un cuerpo caído tapa una puerta entera. Cerrado el 5/8/2026: no es un bug, es la
+      mecánica.** Ver `docs/decisions/0008-horneado-del-navmesh-y-cuerpo-caido.md`.
 
-      Hoy el caído es una cápsula parada con un anillo de evitación de 0.8 m encima, así
-      que el zombie necesita 1.2 m de despeje para rodearlo y **las puertas interiores del
-      greybox miden 1.4 m**. Un cuerpo tirado en un vano lo bloquea del todo. El objetivo
-      es que el zombie pueda pasarle **por encima o al lado** sin trabarse.
+      Se decidió que tape, y no se ensancha ningún vano del mapa para evitarlo. Vale para
+      las puertas interiores de 1.4 m; en los vanos de 2.0 m del galpón un cuerpo pegado a
+      la jamba deja pasar. Bloquea tanto al zombie como al compañero que viene a levantarte,
+      y esa segunda mitad es a propósito.
 
-      Ojo con la mitad que se pasa por alto: **el mismo problema lo tiene el que viene a
-      levantarte.** Si el cuerpo tapa el vano, el que te salva tampoco entra, y eso es peor
-      que el zombie trabado — bloquea el rescate en el único lugar donde importa.
-
-      Las dos salidas conocidas se pisan con otras cosas: bajarle el radio al obstáculo lo
-      hace más fácil de atravesar visualmente, y darle al caído un collider bajo de verdad
-      —que es lo correcto— depende de que exista una pose tirado, o sea de los assets y las
-      animaciones de v0.6. Hasta entonces puede hacer falta una solución intermedia.
+      Lo que sigue abierto y **no** bloquea nada: que el zombie pueda **saltar por encima**
+      de un cuerpo, aprovechando que tirado es más ancho pero mucho más bajo. Está
+      presupuestado en `docs/plan.md` (el número en v0.5, la pose y la animación en v0.6),
+      con el dato antropométrico ya anotado ahí.
 
 - [ ] **Dos jugadores levantando al mismo caído: hoy el segundo pisa al primero.** Anotado
       al terminar v0.2, sin implementar.

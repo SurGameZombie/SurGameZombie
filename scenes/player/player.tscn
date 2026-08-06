@@ -68,7 +68,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 replication_config = SubResource("SceneReplicationConfig_player")
 
 [node name="NavigationObstacle3D" type="NavigationObstacle3D" parent="."]
-radius = 0.8
+radius = 0.4
 height = 1.8
 avoidance_enabled = false
 

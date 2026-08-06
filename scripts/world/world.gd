@@ -25,6 +25,12 @@ const DAMAGE_PER_REQUEST: float = 10.0
 ## del patio, así que un umbral chico dispararía el respaldo siempre.
 const MAX_RESPAWN_SNAP: float = 3.0
 
+## Cuánto puede terminar un camino lejos del punto pedido para darlo por alcanzado,
+## en metros. Es tolerancia de la consulta de navegación, no un número de gameplay:
+## map_get_path() devuelve el último punto navegable, que nunca cae exacto sobre el
+## pedido.
+const REACHABLE_TOLERANCE: float = 1.0
+
 ## A qué distancia se puede levantar a un caído, en metros. Valor de arranque.
 const REVIVE_RANGE: float = 2.0
 
@@ -301,16 +307,49 @@ func _respawn_point(fallen_at: Vector3) -> Vector3:
 	).length()
 
 	if horizontal > MAX_RESPAWN_SNAP:
-		var fallback: Vector3 = _spawn_position(_players.get_child_count())
-		print("[world] respawn: %v está a %.2f m de NavMesh, respaldo en %v" % [
-			fallen_at, horizontal, fallback,
-		])
-		return fallback
+		return _fallback_respawn("%v está a %.2f m de NavMesh" % [fallen_at, horizontal])
+
+	# Cerca no es lo mismo que alcanzable: ver _is_reachable().
+	if not _is_reachable(snapped_point):
+		return _fallback_respawn("%v cae en una isla de NavMesh sin salida" % snapped_point)
 
 	print("[world] respawn: %v -> %v (%.2f m en horizontal)" % [
 		fallen_at, snapped_point, horizontal,
 	])
 	return snapped_point
+
+
+# ¿Se llega caminando desde el círculo de spawn hasta este punto? Corre en el host.
+#
+# map_get_closest_point() ignora la conectividad: devuelve el polígono más cercano
+# aunque sea una isla a la que no se llega desde ningún lado, y entonces alguien que
+# muere adentro de un edificio mal horneado respawnea encerrado ahí.
+#
+# Preguntarle a la región no sirve: map_get_closest_point_owner() y
+# region_owns_point() devuelven lo mismo para el patio y para una isla adentro de un
+# edificio, porque son la misma región. Verificado corriendo. Lo único que distingue
+# es pedir un camino y mirar dónde termina — si el destino es inalcanzable, el
+# camino corta antes de llegar.
+#
+# Medido: 26 µs por consulta, y esto corre una vez por muerte.
+func _is_reachable(point: Vector3) -> bool:
+	var map: RID = get_world_3d().get_navigation_map()
+	# El círculo de spawn es el ancla conocida-buena: si ahí no se puede estar, no
+	# hay partida. Se snapea igual por las dudas.
+	var from: Vector3 = NavigationServer3D.map_get_closest_point(map, _spawn_position(0))
+	var path: PackedVector3Array = NavigationServer3D.map_get_path(map, from, point, true)
+	if path.is_empty():
+		return false
+	# map_get_path() devuelve un camino PARCIAL cuando el destino no se alcanza, así
+	# que lo que decide es dónde termina, no que haya devuelto algo.
+	var last: Vector3 = path[path.size() - 1]
+	return Vector2(last.x - point.x, last.z - point.z).length() <= REACHABLE_TOLERANCE
+
+
+func _fallback_respawn(reason: String) -> Vector3:
+	var fallback: Vector3 = _spawn_position(_players.get_child_count())
+	print("[world] respawn: %s, respaldo en %v" % [reason, fallback])
+	return fallback
 
 
 func _spawn_position(index: int) -> Vector3:

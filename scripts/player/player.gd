@@ -8,6 +8,24 @@ extends CharacterBody3D
 ## Lo que este script NO decide: su vida, si está caído y dónde respawnea. Eso es
 ## del host y entra por el nodo Stats o por una orden como teleport_to().
 
+## Altura de la cámara estando caído, en metros. **PROVISORIO** — es game feel y
+## sale del playtest, así que todavía NO está en docs/design.md.
+##
+## Sale de una proporción antropométrica real, no de un número inventado, y el
+## ancla es la pose decidida: **arrastrándose boca abajo**, no gateando. La
+## profundidad de pecho de un adulto es ~0.25 m contra ~1.75 m de estatura
+## (percentil 50, adultos británicos y estadounidenses), o sea que boca abajo
+## medís alrededor del 14% de lo que medís parado, más ~0.04 m por ropa de
+## exterior. Sobre el 1.8 m de este proyecto da ~0.30 m.
+##
+## El mismo número está presupuestado en docs/plan.md → v0.5 para la altura del
+## obstáculo cuando el zombie pueda saltar por encima. Si la pose cambia, cambian
+## los dos.
+##
+## Solo cambia la ALTURA. El ángulo de la cámara no se toca a propósito: el caído
+## se arrastra mirando al frente, no boca arriba.
+const DOWNED_CAMERA_HEIGHT: float = 0.3
+
 ## Velocidad caminando, en m/s. docs/design.md → "Escala y números base".
 @export var walk_speed: float = 4.0
 
@@ -53,6 +71,10 @@ extends CharacterBody3D
 ## se prende estando caído: si estuviera prendido siempre, el zombie esquivaría
 ## también al jugador que persigue y nunca llegaría a morderlo.
 @onready var _obstacle: NavigationObstacle3D = $NavigationObstacle3D
+
+## La altura de la cámara de pie, leída de player.tscn en vez de hardcodeada, para
+## que mover la cámara en el editor no deje este script desincronizado.
+@onready var _standing_camera_height: float = _camera.position.y
 
 
 # La autoridad NO se replica sola: cada máquina la deduce del nombre del nodo.
@@ -116,6 +138,19 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _obstacle.avoidance_enabled != _stats.is_downed:
 		_obstacle.avoidance_enabled = _stats.is_downed
+	_update_camera_height()
+
+
+# Lo único que hace visible el estado caído hasta que haya animaciones: la cámara
+# baja al piso. Sin esto, un caído se ve idéntico a alguien parado que no camina, y
+# el playtest de v0.2 mide justo ese sistema.
+#
+# Se toca SOLO position.y. La rotación queda como está: el pitch lo maneja _look()
+# y el caído se arrastra mirando al frente.
+func _update_camera_height() -> void:
+	var target: float = DOWNED_CAMERA_HEIGHT if _stats.is_downed else _standing_camera_height
+	if not is_equal_approx(_camera.position.y, target):
+		_camera.position.y = target
 
 
 func _unhandled_input(event: InputEvent) -> void:
