@@ -31,9 +31,24 @@ proceso, guardar, y consultar en otro.
 **2. Control negativo obligatorio, siempre.**
 
 Antes de creerle un resultado al barrido, hay que romperlo a propósito y confirmar que lo
-reporta: tapiar una puerta que hoy está abierta, o subir `agent_radius` a 1,5. **Si el
-barrido sigue diciendo que todo conecta, el barrido está roto y no se mira ningún otro
-número.** Agarró errores en las tres veces que se corrió.
+reporta: aislar una zona que hoy se alcanza, o subir `agent_radius` a 1,5. **Si el
+barrido sigue diciendo que todo conecta, o el barrido está roto o el control no rompe
+nada — y hasta no saber cuál de las dos, no se mira ningún otro número.** Agarró errores
+en las tres veces que se corrió.
+
+**Aislar no es lo mismo que tapiar una puerta, y confundirlos da un falso verde.**
+*(Corregido el 6/8/2026. Este skill decía "tapiar una puerta que hoy está abierta" y su
+ejemplo tapiaba solo la puerta sur del galpón. Se corrió y no rompió nada: el galpón
+sigue conectado por la puerta este.)* Es consecuencia directa de una regla de diseño del
+proyecto —**cada edificio tiene al menos dos aberturas**, `docs/design.md` →
+"Ambientación"—, así que en este mapa **ningún edificio se aísla tapiando una sola
+abertura**. El control tiene que cerrarlas todas, o no controla.
+
+**Sin verificar (6/8/2026): la oficina tiene el mismo problema y nadie lo miró.** También
+tiene dos aberturas —la puerta norte y la este—, así que un control negativo que tapie una
+sola de las dos daría el mismo falso verde. El control de acá abajo sella el galpón y solo
+el galpón; si algún día hace falta uno sobre la oficina, hay que cerrarle las dos y
+verificarlo antes de creerle.
 
 ## Procedimiento
 
@@ -50,17 +65,25 @@ const OUT: String = "user://navprobe"
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 	await _bake("actual", false)
-	await _bake("NEG_tapiada", true)   # control negativo
+	await _bake("NEG_sellado", true)   # control negativo
 	quit(0)
 
-func _bake(nombre: String, tapiar: bool) -> void:
+# Sella el galpón entero: sus DOS puertas, la sur y la este. Con una sola no
+# alcanza — ver "las dos reglas". El zombie spawnea adentro del galpón, así que
+# sellarlo tiene que dejar todo el patio de afuera en X.
+func _bake(nombre: String, sellar: bool) -> void:
 	var region: NavigationRegion3D = load("res://scenes/main/yard.tscn").instantiate()
-	if tapiar:
-		var m: CSGBox3D = CSGBox3D.new()
-		m.position = Vector3(-20, 1.5, -11.8)   # puerta sur del galpón
-		m.size = Vector3(2.0, 3.0, 0.4)
-		m.use_collision = true
-		region.add_child(m)
+	if sellar:
+		var sur: CSGBox3D = CSGBox3D.new()
+		sur.position = Vector3(-20, 1.5, -11.8)   # puerta sur del galpón
+		sur.size = Vector3(2.0, 3.0, 0.4)
+		sur.use_collision = true
+		region.add_child(sur)
+		var este: CSGBox3D = CSGBox3D.new()
+		este.position = Vector3(-5.8, 1.5, -19)   # puerta este del galpón
+		este.size = Vector3(0.4, 3.0, 2.0)
+		este.use_collision = true
+		region.add_child(este)
 	var nm: NavigationMesh = region.navigation_mesh.duplicate() as NavigationMesh
 	region.navigation_mesh = nm
 	root.add_child(region)
@@ -116,7 +139,7 @@ func _initialize() -> void:
 ```powershell
 & $godot --headless --path . -s res://_bake.gd
 & $godot --headless --path . -s res://_query.gd ++ actual
-& $godot --headless --path . -s res://_query.gd ++ NEG_tapiada
+& $godot --headless --path . -s res://_query.gd ++ NEG_sellado
 ```
 
 ### Paso 3 — Leer el mapa
@@ -130,7 +153,14 @@ aceptadas hoy son astillas de una celda adentro de la huella de cada contenedor 
 artefacto de rasterización donde la cara de abajo del contenedor es coplanar con el piso,
 e inalcanzables para el respawn porque habría que morir dentro de un sólido.
 
-En el control negativo, la zona detrás de la puerta tapiada **tiene que** pasar a `X`.
+En el control negativo, **el patio entero de afuera tiene que pasar a `X`** y solo tiene
+que quedar en `#` el interior del galpón, que es donde spawnea el zombie. Si queda algo
+de afuera en `#`, el sellado no cerró: mirar si el galpón ganó una abertura más desde la
+última vez que se actualizó este archivo.
+
+Medido el 6/8/2026: sellado da 389 polígonos contra los 414 del mapa actual, y todo el
+patio en `X`. Tapiando **solo** la puerta sur da 402 polígonos y **el mapa sale idéntico
+al actual** — ese es exactamente el falso verde contra el que avisa la regla 2.
 
 ## Medir un vano concreto
 
