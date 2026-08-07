@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="NavigationMesh" path="res://scenes/main/yard_navmesh.tres" id="1_navmesh"]
+[ext_resource type="PackedScene" path="res://scenes/items/storage_container.tscn" id="2_storage_container"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_floor"]
 albedo_color = Color(0.42, 0.42, 0.43, 1)
@@ -295,3 +296,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.75, -8)
 use_collision = true
 size = Vector3(2, 1.5, 2)
 material = SubResource("Mat_obstacle")
+
+[node name="ShelfWarehouse" parent="." instance=ExtResource("2_storage_container")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, -25.7)
+container_id = "shelf_warehouse_01"
+debug_contents = PackedStringArray("ammo_9mm:45", "bandages:3", "crowbar:1", "water_bottle:2", "backpack:1")

@@ -1,0 +1,32 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/storage_container.gd" id="1_container"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory.gd" id="2_inventory"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory_sync.gd" id="3_inventory_sync"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_shelf"]
+size = Vector3(1.6, 1.2, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_shelf"]
+size = Vector3(1.6, 1.2, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shelf"]
+albedo_color = Color(0.36, 0.33, 0.28, 1)
+
+[node name="StorageContainer" type="StaticBody3D"]
+script = ExtResource("1_container")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("StandardMaterial3D_shelf")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_shelf")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("2_inventory")
+
+[node name="InventorySync" type="Node" parent="Inventory"]
+script = ExtResource("3_inventory_sync")

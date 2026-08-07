@@ -1,7 +1,9 @@
-[gd_scene load_steps=10 format=3 uid="uid://bej433us6ddor"]
+[gd_scene load_steps=12 format=3 uid="uid://bej433us6ddor"]
 
 [ext_resource type="Script" uid="uid://b0gxg04apicfw" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/player_stats.gd" id="2_stats"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory.gd" id="3_inventory"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory_sync.gd" id="4_inventory_sync"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.4
@@ -77,3 +79,9 @@ script = ExtResource("2_stats")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Stats"]
 replication_config = SubResource("SceneReplicationConfig_stats")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("3_inventory")
+
+[node name="InventorySync" type="Node" parent="Inventory"]
+script = ExtResource("4_inventory_sync")
