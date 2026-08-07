@@ -46,8 +46,8 @@ usuario y usar `godot` directo.
 
 `--import` es el flag correcto para verificar el proyecto: importa los recursos y sale.
 
-Tests (gdUnit4 **no está instalado** — entra en v0.3, ver `docs/plan.md`). Sin
-`--ignoreHeadlessMode` sale con código 103 y no corre nada:
+Tests (gdUnit4 v6.2.0, instalado). Sin `--ignoreHeadlessMode` sale con código 103 y no
+corre nada. Los reportes van a `reports/`, que está en `.gitignore`:
 ```powershell
 & $godot --headless --path . -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd --ignoreHeadlessMode -a res://tests
 ```

@@ -113,7 +113,9 @@ Inventario replicado. ~10 items. Contenedores registrables (armarios, autos). Pi
 **Los contenedores nacen con un ID persistente propio, no con `NodePath`** (`@export var container_id: String`). El save de v0.5 los va a buscar por ese ID, y renombrar o mover un nodo cambia su ruta en el árbol. Es dos milestones antes de que se note: si acá se usan node paths "porque todavía no hay save", en v0.5 hay que volver a tocar cada contenedor del mapa. Ver `docs/netcode.md` → "El mundo es del host".
 De los 10 items, en v0.3 solo la mochila hace algo; el resto entra inerte, a propósito (tabla en `docs/design.md`).
 **La bolsa de muerte entra acá y hay que presupuestarla aparte:** no es un item, es una entidad de red con spawner, inventario serializado y persistencia (ver `docs/netcode.md`). Es la pieza más cara del milestone.
-**gdUnit4 se instala acá, no antes.** Se verificó que es GDScript puro (cero binarios, cero GDExtension) y que la versión 6.2.1 soporta 4.7.1, así que el pendiente que venía arrastrándose no era de compatibilidad sino del AssetLib: se baja el zip del tag de GitHub y se copia `addons/gdUnit4/`. **Las suites van como `*_test.gd`, nunca `test_*.gd`:** el runner que trae el MCP `godot-ai` —`McpTestSuite`, que existe y nadie está usando— descubre por el prefijo contrario y reportaría cada suite de gdUnit4 como error. Medido con los dos instalados. El argumento para instalarlo es v0.3 y no v0.2: hoy hay ~200 líneas que justifiquen un test unitario, y la matemática del inventario las multiplica.
+**gdUnit4 está instalado desde el 6/8/2026: v6.2.0.** El pendiente que venía arrastrándose no era de compatibilidad sino del AssetLib: se baja el zip del tag de GitHub (`archive/refs/tags/v6.2.0.zip`) y se copia `addons/gdUnit4/`. Verificado copiándolo: 272 archivos, 1.1 MB, **236 `.gd` y cero binarios, cero `.gdextension`** — el único archivo que no es GDScript es `src/dotnet/GdUnit4CSharpApi.cs`, que la versión standard de Godot ignora. Los reportes se escriben en `reports/`, ignorado por git.
+
+*(Corregido al instalarlo. Este doc decía "la versión 6.2.1 soporta 4.7.1" y ese número no existe: la última release es la **v6.2.0**, del 28/7/2026, y no hay ninguna 6.2.x posterior. Y la tabla de compatibilidad del propio README de la v6.2.0 llega hasta **`v4.7.1-rc1`**, no hasta 4.7.1-stable — o sea que la conclusión era correcta pero el dato con el que se la justificaba no. Que ande en 4.7.1-stable quedó verificado corriéndolo, no leyéndolo: 2 de 2 tests pasados y código de salida 0. Es el patrón §1.D2 de la retrospectiva, "verifico firmas, no valores", una vez más.)* **Las suites van como `*_test.gd`, nunca `test_*.gd`:** el runner que trae el MCP `godot-ai` —`McpTestSuite`, que existe y nadie está usando— descubre por el prefijo contrario y reportaría cada suite de gdUnit4 como error. Medido con los dos instalados. El argumento para instalarlo es v0.3 y no v0.2: hoy hay ~200 líneas que justifiquen un test unitario, y la matemática del inventario las multiplica.
 
 **v0.4 — "Duele"**
 Hambre y sed drenando con el tiempo. Comida y agua como items consumibles. Muerte por inanición. Stamina que se consume corriendo.
@@ -255,11 +257,15 @@ Este es el punto crítico. Por default, **Claude Code edita archivos pero no pue
 
 **a) Tests headless con GUT o gdUnit4.** Los dos corren desde línea de comandos con `godot --headless`, y gdUnit4 genera reportes JUnit XML/HTML e integra con GitHub Actions (soporta hasta 4.7.x). Claude Code corre los tests y lee pass/fail estructurado.
 
-> **[Estado real: esta mitad del loop NO está cerrada.]** gdUnit4 todavía no se pudo
-> instalar —el AssetLib falla, ver `docs/bitacora.md` → "Problemas que ya nos pasaron"—
-> así que hoy no hay tests headless y el comando de tests de `CLAUDE.md` no corre. La
-> única verificación real del proyecto es el MCP server más jugarlo nosotros. Mientras
-> siga así, todo lo que se entregue queda sin cubrir por (a).
+> **[Estado real al 6/8/2026: esta mitad del loop está abierta pero recién estrenada.]**
+> gdUnit4 v6.2.0 quedó instalado y el comando de `CLAUDE.md` corre: hay una suite mínima
+> (`tests/runner_smoke_test.gd`) que solo prueba que el runner arranca y reporta. Todavía
+> no cubre una sola línea del juego — la primera cobertura real es la matemática del
+> inventario de v0.3.
+>
+> *(Antes decía: "gdUnit4 todavía no se pudo instalar —el AssetLib falla— así que hoy no
+> hay tests headless y el comando de tests de `CLAUDE.md` no corre". El AssetLib sigue
+> fallando; lo que se destrabó es bajar el zip del tag.)*
 
 Qué testear: **la lógica pura**, no el rendering. Matemática de inventario (stacking, capacidad, split), decay de hambre, cálculo de daño, loot tables, serialización del save. Eso es donde viven los bugs sutiles y es donde los tests pagan.
 

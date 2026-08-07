@@ -238,11 +238,13 @@ pero sin guardar. En VS Code, el puntito blanco en la pestaña significa sin gua
 
 **gdUnit4 no se pudo instalar desde el AssetLib.** El botón *Download* quedaba
 deshabilitado, con la versión colgada en `Version: Loading...` indefinidamente.
-**Sin resolver.** Consecuencia: no hay tests headless todavía, así que el comando de tests
-de `CLAUDE.md` no corre.
+**El AssetLib sigue fallando y no lo investigamos más**, porque el rodeo funciona.
 
-→ Alternativa a probar: bajar el release directo de GitHub y descomprimir `addons/gdUnit4/`
-a mano en el repo, salteando el AssetLib.
+→ **Resuelto el 6/8/2026 salteándolo.** Se baja el zip del tag directo de GitHub
+(`https://github.com/godot-gdunit-labs/gdUnit4/archive/refs/tags/v6.2.0.zip`) y se copia
+`addons/gdUnit4/` a mano. El zip del tag **no trae la carpeta `test/` del propio addon**
+—el `.gitattributes` del repo la marca `export-ignore`—, así que lo que entra son 272
+archivos y 1.1 MB, no el repo entero. Anda en 4.7.1-stable: verificado corriéndolo.
 
 **Un autoload nuevo no existe para el editor abierto hasta reiniciarlo.** Agregar el
 autoload deja `project.godot` correcto (`NetworkManager="*res://..."`, con el `*` de
@@ -359,7 +361,10 @@ no un feature que se agrega.
          el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
          `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
-- [ ] Instalar gdUnit4 — el AssetLib falla (ver "Problemas"). Probar el `.zip` de GitHub
+- [x] **Instalar gdUnit4 — hecho el 6/8/2026, v6.2.0**, bajando el `.zip` del tag de GitHub
+      porque el AssetLib sigue fallando (ver "Problemas"). Falta un solo paso manual:
+      **prenderlo en Project → Plugins desde el editor.** El runner de línea de comandos no
+      lo necesita —ya corre—, pero el inspector de tests adentro del editor sí
 - [ ] Bajar los packs de assets y decidir la familia visual. **Se puede hacer en paralelo
       desde v0.3**, en los ratos sin código: no bloquea hasta v0.6, pero llegar a v0.6 con
       la familia ya elegida convierte esa pasada de arte en aplicar decisiones, no tomarlas

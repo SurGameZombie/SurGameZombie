@@ -13,6 +13,11 @@
 # credenciales. No van al repo.
 export_presets.cfg
 
+# Reportes de gdUnit4. Los escribe el runner en cada corrida, numerados
+# (report_1, report_2, ...), así que crecen sin límite y no le sirven a nadie
+# más que a quien corrió los tests en su máquina.
+/reports/
+
 # Sistema
 .DS_Store
 Thumbs.db
