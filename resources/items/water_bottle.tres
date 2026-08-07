@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_definition.gd" id="1_item_definition"]
+
+[resource]
+script = ExtResource("1_item_definition")
+id = "water_bottle"
+display_name = "Botella de agua"
+; weight y max_stack son PROVISORIOS: placeholders razonables, no balance. No
+; salieron de jugarlo y no entran a docs/design.md hasta que lo hagan. Los
+; números de gameplay son de Mathi (.claude/rules/limites.md).
+; OJO: guardar este archivo desde el Inspector de Godot BORRA este comentario.
+; La copia que sobrevive está en scripts/inventory/item_definition.gd.
+weight = 1.0
+; No stackea a propósito: en v0.4 la botella va a tener nivel de llenado, y dos
+; botellas por la mitad no son una llena.
+stackable = false
+max_stack = 1

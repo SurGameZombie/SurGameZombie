@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_definition.gd" id="1_hwq88"]
+[ext_resource type="Resource" path="res://resources/items/ammo_9mm.tres" id="2_h32xy"]
+[ext_resource type="Resource" path="res://resources/items/backpack.tres" id="3_qrtly"]
+[ext_resource type="Resource" path="res://resources/items/bandages.tres" id="4_asvdv"]
+[ext_resource type="Resource" path="res://resources/items/bat.tres" id="5_gypyu"]
+[ext_resource type="Resource" path="res://resources/items/cereal_bar.tres" id="6_7e8vy"]
+[ext_resource type="Resource" path="res://resources/items/crowbar.tres" id="7_50gtp"]
+[ext_resource type="Resource" path="res://resources/items/flashlight.tres" id="8_j5pdp"]
+[ext_resource type="Resource" path="res://resources/items/food_can.tres" id="9_y1i5p"]
+[ext_resource type="Resource" path="res://resources/items/pistol_9mm.tres" id="10_u0il0"]
+[ext_resource type="Resource" path="res://resources/items/water_bottle.tres" id="11_mago4"]
+[ext_resource type="Script" path="res://scripts/inventory/item_catalog.gd" id="12_pbgue"]
+
+[resource]
+script = ExtResource("12_pbgue")
+items = Array[ExtResource("1_hwq88")]([ExtResource("2_h32xy"), ExtResource("3_qrtly"), ExtResource("4_asvdv"), ExtResource("5_gypyu"), ExtResource("6_7e8vy"), ExtResource("7_50gtp"), ExtResource("8_j5pdp"), ExtResource("9_y1i5p"), ExtResource("10_u0il0"), ExtResource("11_mago4")])

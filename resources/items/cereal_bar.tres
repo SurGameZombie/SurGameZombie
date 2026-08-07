@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_definition.gd" id="1_item_definition"]
+
+[resource]
+script = ExtResource("1_item_definition")
+id = "cereal_bar"
+display_name = "Barra de cereal"
+; weight y max_stack son PROVISORIOS: placeholders razonables, no balance. No
+; salieron de jugarlo y no entran a docs/design.md hasta que lo hagan. Los
+; números de gameplay son de Mathi (.claude/rules/limites.md).
+; OJO: guardar este archivo desde el Inspector de Godot BORRA este comentario.
+; La copia que sobrevive está en scripts/inventory/item_definition.gd.
+weight = 0.05
+stackable = true
+max_stack = 5
