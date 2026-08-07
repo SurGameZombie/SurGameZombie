@@ -7,7 +7,8 @@ extends CanvasLayer
 ##
 ## Todo el andamio está en este archivo a propósito: cuando entre el HUD de
 ## verdad se borran el script, el nodo de world.tscn y las acciones debug_hurt,
-## debug_hurt_invalid y debug_pause_zombies, y no queda nada suelto.
+## debug_hurt_invalid, debug_pause_zombies y debug_inventory_attack, y no queda
+## nada suelto.
 
 ## Un peer que no existe. Sirve para pedirle al host daño sobre un jugador
 ## inventado y ver que lo rechaza.
@@ -25,6 +26,9 @@ const GHOST_PEER_ID: int = 999999
 ## El contenedor de zombies. Mismo motivo.
 @export var zombies_root_path: NodePath = ^"../Zombies"
 
+## Dónde viven las RPC de pedido de inventario. Mismo motivo.
+@export var requests_path: NodePath = ^"../InventoryRequests"
+
 ## Si los zombies están congelados por F3. Vive acá y no adentro del zombie
 ## porque es estado del andamio: se borra junto con este archivo.
 var _zombies_paused: bool = false
@@ -33,6 +37,7 @@ var _zombies_paused: bool = false
 @onready var _players_root: Node3D = get_node(players_root_path)
 @onready var _world: Node = get_node(world_path)
 @onready var _zombies_root: Node3D = get_node(zombies_root_path)
+@onready var _requests: Node = get_node(requests_path)
 
 
 func _process(_delta: float) -> void:
@@ -55,6 +60,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_send_invalid_requests()
 	elif event.is_action_pressed("debug_pause_zombies"):
 		_toggle_zombie_pause()
+	elif event.is_action_pressed("debug_inventory_attack"):
+		_send_invalid_inventory_requests()
 
 
 # Congela a los zombies y nada más. Apaga su _physics_process, que es donde
@@ -106,6 +113,70 @@ func _send_invalid_requests() -> void:
 		_world.request_damage.rpc_id(1, other_id)
 
 
+# El control negativo del inventario: los tres pedidos que el host TIENE que
+# rechazar. F4.
+#
+# Es obligatorio antes de dar la réplica por probada, por lo mismo que el de daño:
+# un cliente que se porta bien se ve idéntico contra un host que valida y contra
+# uno que acepta todo. Los rechazos se imprimen en la consola DEL HOST.
+func _send_invalid_inventory_requests() -> void:
+	var container: StorageContainer = _any_container()
+	if container != null:
+		var distance: float = _distance_to(container)
+		print("[debug] mentira 1: sacar de '%s' estando a %.1f m (el límite es %.1f)" % [
+			container.container_id, distance, InventoryRequests.CONTAINER_RANGE,
+		])
+		if distance <= InventoryRequests.CONTAINER_RANGE:
+			print("[debug]   OJO: estás DENTRO del rango, así que este pedido es legítimo")
+		# Rebota en el chequeo de distancia de _can_access() — si estás lejos.
+		_requests.request_take_from_container.rpc_id(1, container.container_id, "crowbar", 1)
+
+	# Mentira 2: un contenedor que no existe. Rebota en el buscador por id.
+	_requests.request_take_from_container.rpc_id(1, "no_existe_este_contenedor", "crowbar", 1)
+
+	_lie_about_another_inventory()
+
+
+# Mentira 3, y es la que de verdad importa: escribirle un delta al inventario de
+# OTRO jugador, pasándole el path directo, que es el hueco que tiene el addon de
+# expressobits.
+#
+# apply_stack_added es @rpc("authority") y la autoridad de ese nodo es el host, así
+# que el host tiene que rechazarla. **Si esto funciona, la reasignación de
+# autoridad del _enter_tree() no está andando y todo el paso 3 está apoyado en
+# nada.** Se ve mirando si al otro jugador le aparecen 99 palancas.
+func _lie_about_another_inventory() -> void:
+	var other_id: int = _other_peer_id()
+	if other_id == 0:
+		print("[debug] mentira 3 salteada: hace falta un segundo jugador conectado")
+		return
+	var sync: Node = _players_root.get_node_or_null(
+		NodePath("%d/Inventory/InventorySync" % other_id)
+	)
+	if sync == null:
+		print("[debug] mentira 3 salteada: no encuentro el InventorySync del peer %d" % other_id)
+		return
+	print("[debug] mentira 3: mando 99 palancas al inventario del peer %d" % other_id)
+	sync.apply_stack_added.rpc_id(1, 0, "crowbar", 99)
+
+
+func _any_container() -> StorageContainer:
+	for node: Node in get_tree().get_nodes_in_group(StorageContainer.GROUP):
+		var container: StorageContainer = node as StorageContainer
+		if container != null:
+			return container
+	return null
+
+
+func _distance_to(container: StorageContainer) -> float:
+	var me: Node3D = _players_root.get_node_or_null(
+		NodePath(str(multiplayer.get_unique_id()))
+	) as Node3D
+	if me == null:
+		return INF
+	return me.global_position.distance_to(container.global_position)
+
+
 # El ID de cualquier otro jugador, o 0 si estás solo y no hay a quién pedírselo.
 func _other_peer_id() -> int:
 	var own_id: int = multiplayer.get_unique_id()
@@ -135,9 +206,44 @@ func _build_text() -> String:
 			player.get_multiplayer_authority(),
 			stats.get_multiplayer_authority(),
 		])
+		lines.append(_inventory_line(player))
+	for node: Node in get_tree().get_nodes_in_group(StorageContainer.GROUP):
+		lines.append(_container_line(node as StorageContainer))
 	for zombie: Zombie in _zombies_root.get_children():
 		lines.append(_zombie_line(zombie))
 	return "\n".join(lines)
+
+
+# El peso y los stacks de cada jugador, en las dos pantallas a la vez. Es lo que
+# hace visible si la réplica del inventario funciona: los dos números tienen que
+# leerse IGUAL en el host y en el cliente. Si solo se mueven del lado del host, no
+# está replicando.
+#
+# inv@ es la autoridad del nodo, y tiene que decir 1 SIEMPRE, incluso en la línea
+# del jugador de un cliente. Si dice otra cosa, los @rpc("authority") del
+# InventorySync están muertos.
+func _inventory_line(player: Node) -> String:
+	var inventory: Inventory = player.get_node_or_null("Inventory") as Inventory
+	if inventory == null:
+		return "          (sin Inventory)"
+	return "          inv %6.2f / %4.1f kg  %d stacks  inv@%d" % [
+		inventory.get_weight(),
+		inventory.capacity,
+		inventory.stacks.size(),
+		inventory.get_multiplayer_authority(),
+	]
+
+
+func _container_line(container: StorageContainer) -> String:
+	if container == null:
+		return ""
+	var inventory: Inventory = container.inventory
+	return "%-14s inv %6.2f / %4.1f kg  %d stacks" % [
+		container.container_id,
+		inventory.get_weight(),
+		inventory.capacity,
+		inventory.stacks.size(),
+	]
 
 
 # Estado del caído: cuánto le queda y si lo están levantando. Los dos números los
