@@ -1,7 +1,7 @@
 # Permisos curados de `.claude/settings.local.json`
 
-> **Documento de trabajo de la Parte 3. Aplicado el 11/8/2026: 78 entradas → 27, más
-> una agregada el mismo día → 28.**
+> **Documento de trabajo de la Parte 3. Aplicado el 11/8/2026: 78 entradas → 27; el mismo
+> día entró una (→ 28) y salieron dos por la decisión 3 (→ 26).**
 > Se borra cuando se absorba en `ESTADO.md`.
 
 El archivo está en `.gitignore:28`, o sea que **es por máquina**: esta curación vale para
@@ -46,9 +46,10 @@ El matcheo es contra el texto del comando, no contra el filesystem.
 | **D.** Exactas de un solo uso | 27 | borradas |
 | **E.** Godot por PowerShell, mal formadas | 10 | reescritas como 5 por statement |
 
-**78 → 27.** Serían 23 si godot-ai se fuera del proyecto —y siguen siendo 23 con la alta
-de abajo, porque es de godot-ai. La partición de arriba es la foto de la curación; lo que
-se agregó después va en "Altas posteriores".
+**78 → 27**, y 23 si godot-ai se fuera del proyecto. La partición de arriba es la foto de
+la curación del 11/8 y no se toca; los movimientos posteriores van en "Altas posteriores"
+y en la decisión 3. Hoy el archivo tiene **26**: 27 + `session_manage` − `project_manage`
+− `input_map_manage`.
 
 ### B, C y D — las 48 que se fueron
 
@@ -122,6 +123,9 @@ Más las cuatro de godot-ai (`editor_state`, `api_manage`, `input_map_manage`,
 `project_manage`), que valen igual esté el MCP declarado donde esté: el permiso matchea
 por nombre de tool, no por dónde se declara el servidor.
 
+> Las dos últimas salieron el mismo día por la decisión 3; esta lista es la foto de la
+> curación, no el estado de hoy.
+
 Salieron por redundantes `PowerShell(git add *)` y `PowerShell(git --no-pager log *)`:
 `PowerShell(git *)` ya las cubre.
 
@@ -162,7 +166,8 @@ todas las tools del servidor. Acá no cambia nada igual: `session_manage` expone
 única op, así que el permiso por tool es tan angosto como uno por op.
 
 Que la alternativa sea `mcp__godot-ai__*` vale tenerlo presente para la decisión 3 de
-abajo: hoy hay cinco entradas de godot-ai sobre las 43 tools que publica el servidor.
+abajo, que la descarta: hoy quedan tres entradas de godot-ai sobre las 43 tools que
+publica el servidor, y las tres solo leen.
 
 ---
 
@@ -191,7 +196,7 @@ igual.
 
 ---
 
-## Dos decisiones que siguen abiertas
+## Decisiones: dos abiertas, una resuelta
 
 1. **Asimetría de git entre shells.** `PowerShell(git *)` aprueba todo git —incluido
    `push --force` y `reset --hard`—, mientras que Bash tiene tres entradas granulares.
@@ -202,28 +207,101 @@ igual.
    igual—, pero el permiso saca el prompt del sistema, que era la última red si la regla
    fallara.
 
-3. **Dos de las cinco de godot-ai ya aprueban escrituras, sin que se haya decidido.**
-   Como la regla no puede acotar el `op`, aprobar el nombre aprueba todas las ops del
-   tool. `editor_state`, `api_manage` y `session_manage` solo leen. Las otras dos no:
-   `project_manage` incluye `settings_set` —escribe `project.godot` y lo persiste— y
-   `stop`; `input_map_manage` incluye `add_action`, `bind_event` y `remove_action`, que
-   también escriben `project.godot`. O sea que el input map, que `CLAUDE.md` fija por
-   `physical_keycode` para movimiento y `keycode` para atajos, hoy se puede reescribir
-   sin prompt.
+3. ~~**Dos de las cinco de godot-ai aprueban escrituras.**~~ **Resuelta el 11/8/2026:
+   `project_manage` e `input_map_manage` salieron del allowlist.** Vuelven a pedir
+   confirmación en cada uso, lectura incluida. Quedan tres: `editor_state`, `api_manage`
+   y `session_manage`, que solo leen.
 
-   Sí queda el diff: `project.godot` está versionado, así que un cambio se ve en
-   `git status`. Eso lo vuelve visible, no bloqueado.
+   Ver "Decisión 3, resuelta" abajo.
 
-   La decisión de fondo es dónde va la línea. Si es "lectura sin prompt, escritura con
-   prompt", estas dos entradas están del lado equivocado y la única forma de arreglarlo
-   es sacarlas —no hay manera de aprobar `settings_get` y no `settings_set`—. Si la
-   línea es "que quede en el diff", están bien y conviene escribirlo para no volver a
-   discutirlo. Lo que no sirve es el estado actual, que es el resultado de que las tools
-   agrupen ops de lectura y de escritura bajo un nombre, no de una elección nuestra.
+## Decisión 3, resuelta: `project_manage` e `input_map_manage` fuera del allowlist
 
-   El mismo razonamiento decide `mcp__godot-ai__*`: de las 43 tools del servidor, las 38
-   que faltan son casi todas de escritura (`script_patch`, `node_manage`, `scene_save`,
-   `resource_manage`). El wildcard es la versión maximal de la segunda línea.
+Las dos vuelven a pedir confirmación en cada uso, **lectura y escritura**, porque a nivel
+de permiso no hay forma de separar una de la otra: la regla es por nombre de tool y las
+dos tools mezclan las dos cosas sobre el mismo archivo.
+
+| Tool | Ops que leen | Ops que escriben `project.godot` |
+|---|---|---|
+| `project_manage` | `settings_get` | `settings_set` (persiste), `stop` |
+| `input_map_manage` | `list` | `add_action`, `ensure_action`, `bind_event`, `remove_action` |
+
+### Por qué `project.godot` y no otro archivo
+
+Es el archivo de configuración más sensible del proyecto. Un error acá **no rompe una
+cosa: rompe el arranque entero.** Ahí viven los autoloads, el input map, los plugins
+habilitados, los parámetros de navegación y las capas de física. No hay degradación
+parcial: o abre o no abre.
+
+### El costo de exigir prompt es bajo, y medido
+
+Contra las 13 transcripciones anteriores, contando llamadas por op:
+
+| Op | Usos | Dónde |
+|---|---|---|
+| `settings_get` | 4 | dos sesiones |
+| `list` | 5 | dos sesiones |
+| `ensure_action` | 7 | solo `f63c17cb` (2-3/8) |
+| `bind_event` | 8 | solo `f63c17cb` |
+| `settings_set` | 2 | solo `f63c17cb` |
+| `stop` | 2 | solo `f63c17cb` |
+| `remove_action` | 1 | solo `f63c17cb` |
+
+La lectura es infrecuente —nueve llamadas en diez días—, así que el prompt extra cuesta
+poco. **La escritura tampoco fue "nunca": fueron 20 llamadas, todas del 2 y 3 de agosto.**
+Lo que sigue es lo que pasó ese día, que es la razón real por la que estas dos salen.
+
+### Lo que pasó el 2/8: el riesgo ya se materializó una vez
+
+`bind_event` creó las seis acciones de movimiento **por `keycode`** — exactamente la
+distinción que `CLAUDE.md` fija a mano para cada input nuevo (movimiento por
+`physical_keycode`, atajos de UI por `keycode`). No fue un descuido del prompt: se
+intentó corregirlo por MCP dos veces, con `physical_keycode: "W"` y con
+`keycode: "W", physical: true`, y la conclusión textual de esa sesión fue **"el MCP solo
+bindea por `keycode` — ignoró el flag"**.
+
+El arreglo terminó siendo editar `project.godot` a mano, que es lo que quedó en
+`e86b2dc`. Y eso abrió el problema siguiente: el editor tenía el input map viejo en
+memoria, así que hasta reabrirlo, cualquier guardado de project settings **pisaba el
+archivo y volvía todo a `keycode`**.
+
+Segundo caso, más chico: `settings_set` escribió `run/main_scene`, clave que terminó
+saliendo del archivo el 10/8 en `2d5097a` por no leerla nadie.
+
+O sea que la escritura por MCP a `project.godot` tiene un antecedente de haber producido
+la falla que se temía, y de haber necesitado dos arreglos manuales. El prompt no es
+teórico: es el punto donde eso se ve antes de que entre.
+
+> **Sobre la versión.** El 2/8 corría godot-ai 3.0.7 (`600bf95` la subió a 3.1.1 el 5/8;
+> hoy es 3.1.2). **No verifiqué si `bind_event` ya soporta `physical_keycode` en 3.1.2.**
+> Si lo soporta, cambia el ejemplo pero no la decisión: el riesgo no era ese bug puntual
+> sino que una escritura a `project.godot` entre sin que nadie la mire.
+
+### Lo que esto NO dice
+
+No es que la escritura por MCP esté prohibida ni que haya que editar `project.godot` a
+mano. Es que **entra con prompt.** Aprobar en el momento sigue siendo un tecleo.
+
+---
+
+## Regla hacia adelante: antes de sumar una tool de MCP al allowlist
+
+Antes de agregar cualquier tool nueva sin prompt, **chequear si mezcla lectura y escritura
+sobre un archivo versionado crítico** —`project.godot` en particular, y también
+`.tscn`/`.tres` que definan escenas o datos del juego.
+
+- **Si no mezcla** (solo lee), entra. Son las tres que quedaron.
+- **Si mezcla**, o se excluye, o **se acepta el riesgo por escrito, acá, con el motivo.**
+  No entra por default y no entra en silencio.
+
+El chequeo es leer la descripción de la tool y listar sus ops. Es barato y hay que hacerlo
+una sola vez por tool. Existe porque el default equivocado es invisible: la tool se llama
+`project_manage`, no `project_write`, y el nombre no delata que `settings_set` viene
+adentro del mismo permiso que `settings_get`.
+
+Esto también decide `mcp__godot-ai__*`, que el parser acepta como forma válida: de las 43
+tools del servidor, la mayoría de las 40 que faltan escriben (`script_patch`,
+`node_manage`, `scene_save`, `resource_manage`). El wildcard es la violación maximal de
+esta regla y queda descartado.
 
 ## Lo que esta curación NO arregla
 
