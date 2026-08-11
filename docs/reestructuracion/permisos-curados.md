@@ -1,6 +1,7 @@
 # Permisos curados de `.claude/settings.local.json`
 
-> **Documento de trabajo de la Parte 3. Aplicado el 11/8/2026: 78 entradas → 27.**
+> **Documento de trabajo de la Parte 3. Aplicado el 11/8/2026: 78 entradas → 27, más
+> una agregada el mismo día → 28.**
 > Se borra cuando se absorba en `ESTADO.md`.
 
 El archivo está en `.gitignore:28`, o sea que **es por máquina**: esta curación vale para
@@ -45,7 +46,9 @@ El matcheo es contra el texto del comando, no contra el filesystem.
 | **D.** Exactas de un solo uso | 27 | borradas |
 | **E.** Godot por PowerShell, mal formadas | 10 | reescritas como 5 por statement |
 
-**78 → 27.** Serían 23 si godot-ai se fuera del proyecto.
+**78 → 27.** Serían 23 si godot-ai se fuera del proyecto —y siguen siendo 23 con la alta
+de abajo, porque es de godot-ai. La partición de arriba es la foto de la curación; lo que
+se agregó después va en "Altas posteriores".
 
 ### B, C y D — las 48 que se fueron
 
@@ -133,6 +136,36 @@ godot-ai y el binario de Claude Code que se auditó para escribir esto.
 
 ---
 
+## Altas posteriores
+
+### `mcp__godot-ai__session_manage` — 11/8/2026
+
+```
+mcp__godot-ai__session_manage
+```
+
+Es el diagnóstico de godot-ai: `op=list` devuelve las sesiones de editor conectadas con
+su `godot_version`, `plugin_version`, escena abierta y `readiness`. Con `count=0` la
+respuesta separa las dos fallas que desde afuera se ven igual —**el servidor MCP caído**
+contra **el servidor sano pero sin editor abierto**— en una sola llamada. Sin esto, la
+primera tool que se use falla con `PLUGIN_DISCONNECTED` y hay que salir a mirar `netstat`
+y la lista de procesos para saber cuál de las dos es.
+
+Entró la primera vez que se probó el MCP de punta a punta, que es justo el escenario donde
+la distinción importa: el servidor estaba levantado con 8000 y 9500 escuchando, y lo único
+que faltaba era abrir el editor.
+
+**No se puede escribir el `op` en la regla.** Los permisos de MCP son por nombre de tool y
+nada más; el parser del bundle rechaza los paréntesis con *"MCP rules do not support
+patterns in parentheses"* y ofrece dos formas: el nombre pelado, o `mcp__<server>__*` para
+todas las tools del servidor. Acá no cambia nada igual: `session_manage` expone `list` como
+única op, así que el permiso por tool es tan angosto como uno por op.
+
+Que la alternativa sea `mcp__godot-ai__*` vale tenerlo presente para la decisión 3 de
+abajo: hoy hay cinco entradas de godot-ai sobre las 43 tools que publica el servidor.
+
+---
+
 ## Lo que el harness ya protege sin que nosotros hagamos nada
 
 Del mismo análisis del bundle. Estas capas corren **además** de las reglas, y varias
@@ -168,6 +201,29 @@ igual.
    contradice `.claude/rules/commits.md` —esa regla es de comportamiento y la sigo
    igual—, pero el permiso saca el prompt del sistema, que era la última red si la regla
    fallara.
+
+3. **Dos de las cinco de godot-ai ya aprueban escrituras, sin que se haya decidido.**
+   Como la regla no puede acotar el `op`, aprobar el nombre aprueba todas las ops del
+   tool. `editor_state`, `api_manage` y `session_manage` solo leen. Las otras dos no:
+   `project_manage` incluye `settings_set` —escribe `project.godot` y lo persiste— y
+   `stop`; `input_map_manage` incluye `add_action`, `bind_event` y `remove_action`, que
+   también escriben `project.godot`. O sea que el input map, que `CLAUDE.md` fija por
+   `physical_keycode` para movimiento y `keycode` para atajos, hoy se puede reescribir
+   sin prompt.
+
+   Sí queda el diff: `project.godot` está versionado, así que un cambio se ve en
+   `git status`. Eso lo vuelve visible, no bloqueado.
+
+   La decisión de fondo es dónde va la línea. Si es "lectura sin prompt, escritura con
+   prompt", estas dos entradas están del lado equivocado y la única forma de arreglarlo
+   es sacarlas —no hay manera de aprobar `settings_get` y no `settings_set`—. Si la
+   línea es "que quede en el diff", están bien y conviene escribirlo para no volver a
+   discutirlo. Lo que no sirve es el estado actual, que es el resultado de que las tools
+   agrupen ops de lectura y de escritura bajo un nombre, no de una elección nuestra.
+
+   El mismo razonamiento decide `mcp__godot-ai__*`: de las 43 tools del servidor, las 38
+   que faltan son casi todas de escritura (`script_patch`, `node_manage`, `scene_save`,
+   `resource_manage`). El wildcard es la versión maximal de la segunda línea.
 
 ## Lo que esta curación NO arregla
 
