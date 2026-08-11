@@ -18,6 +18,15 @@ export_presets.cfg
 # más que a quien corrió los tests en su máquina.
 /reports/
 
+# Permisos y overrides personales de Claude Code. Guardan rutas absolutas del home
+# de cada uno y la lista de comandos que cada máquina aceptó, así que son de la
+# máquina y no del proyecto — al revés que .claude/settings.json, que sí va al repo
+# porque define los hooks para los dos.
+#
+# Va acá y no alcanza con el gitignore global de una máquina: en la otra el archivo
+# no está ignorado y un `git add` amplio se lo lleva.
+.claude/settings.local.json
+
 # Sistema
 .DS_Store
 Thumbs.db
