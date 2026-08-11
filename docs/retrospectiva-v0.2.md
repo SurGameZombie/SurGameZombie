@@ -568,6 +568,10 @@ manda a leer el documento que la contradice.** *(Verificado con grep.)*
 O sea que el commit que arregló la contradicción **la duplicó**. Es el ejemplo más limpio
 de por qué la duplicación entre `docs/` y `.claude/rules/` cuesta (2.9).
 
+**Resuelto el 10/8/2026, ver commit `b1a6ec5`:** la regla quedó entera en
+`.claude/rules/commits.md` y los otros dos lugares pasaron a apuntarla. Lo de arriba queda
+como registro de lo que pasó, no como problema abierto.
+
 ---
 
 **2.2. Los dos milestones "terminados" no cumplen su propio criterio de terminado, y la
