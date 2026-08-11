@@ -20,8 +20,14 @@ const HOST_PEER_ID: int = 1
 ## Vida máxima. NO se replica: está horneada en player.tscn, así que las tres
 ## máquinas ya la tienen igual. Solo se replica lo que cambia en runtime.
 ##
-## Valor de arranque sin decidir todavía: docs/design.md no fija ningún número
-## de vida.
+## Valor de arranque, y conviene saber de dónde salió: docs/design.md SÍ lo fija
+## —"Vida con la que te levantan | 30 de 100", en "Escala y números base"— pero
+## nadie lo eligió. Entró marcado como pendiente y tres commits después ese
+## renglón lo consagró al pasar (docs/retrospectiva-v0.2.md → §1.E1). Cambiarlo
+## sigue siendo decisión de ustedes.
+##
+## Lo que sí es cierto hoy: ese doc y este número tienen que decir lo mismo, y
+## eso lo compara tests/consistencia_test.gd.
 @export var max_health: float = 100.0
 
 ## Cuánto dura el estado caído antes de morir de verdad, en segundos. Valor de
