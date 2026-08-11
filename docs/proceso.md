@@ -92,8 +92,12 @@ Los tres trailers que más nos sirven:
 git log --grep="Not-tested" --oneline
 ```
 
-Eso te da la lista de todo lo que nunca se verificó en el proyecto. Cuando aparece un
-bug raro, ese es el primer lugar donde mirar.
+Eso te da todo lo que **alguna vez** quedó sin verificar, incluido lo que después se
+verificó: el grep no resta nada solo. Lo que resta es el trailer `Tested-later:`, que va
+en el commit que paga la deuda y cita por hash al que la abrió. La mecánica exacta está en
+`.claude/rules/commits.md`, que es la versión que gobierna.
+
+Cuando aparece un bug raro, esa lista es el primer lugar donde mirar.
 
 ### Qué NO hacer
 
@@ -217,7 +221,8 @@ que Claude Code lee para no proponer una solución que ya sabemos que no funcion
 2. ¿"Antes andaba"? → `git bisect`
 3. ¿Es de red? → correr dos instancias y comparar. Casi siempre es autoridad mal
    asignada o un check de `is_multiplayer_authority()` que falta
-4. ¿Está en la lista de `Not-tested:` de algún commit? → `git log --grep="Not-tested"`
+4. ¿Está en la lista de `Not-tested:` de algún commit? → `git log --grep="Not-tested"`,
+   descontando los que ya tengan un `Tested-later:` que los cite
 5. ¿Ya nos pasó? → `docs/bitacora.md`
 
 ---
