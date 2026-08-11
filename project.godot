@@ -104,7 +104,3 @@ debug_inventory_attack={
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-
-[run]
-
-main_scene="res://scenes/main/lobby.tscn"
