@@ -141,7 +141,8 @@ online en abril de 2026 sobre decenas de miles de líneas de GDScript existentes
 1. **Versión de Godot explícita y prominente** en el `CLAUDE.md`, no al pasar.
 2. **Los 10 pitfalls** como checklist al revisar cualquier diff de `.gd`.
 3. **Cortar la sesión a los 40 minutos** y `/clear` entre features.
-4. **Claude Code nunca commitea solo.**
+4. **Claude Code no commitea por iniciativa propia** — la regla completa, con su
+   única excepción, vive en `.claude/rules/commits.md`.
 5. **Playtest sin código a la vista**, quince minutos por milestone.
 6. **Un solo skill de Godot**, si instalamos alguno. Cinco librerías solapadas es
    contexto desperdiciado y descripciones que compiten entre sí.

@@ -101,8 +101,11 @@ bug raro, ese es el primer lugar donde mirar.
 - No commitear con el juego roto
 - No usar mensajes como `cambios`, `fix`, `wip`, `varios`
 - No describir el diff en la primera línea: el diff ya está ahí. Va el **por qué**
-- **Claude Code no commitea solo.** Nunca. El commit es el punto donde nosotros
-  revisamos el diff, y automatizarlo elimina el único control de calidad que tenemos
+- **Claude Code no commitea por iniciativa propia.** El commit es el punto donde
+  nosotros revisamos el diff, y automatizarlo elimina el único control de calidad que
+  tenemos. Cuándo sí puede hacerlo y hasta dónde llega esa autorización lo fija
+  `.claude/rules/commits.md`, que es la versión que gobierna: acá va el porqué y allá
+  la regla, y no se repite en los dos lados
 
 ---
 
