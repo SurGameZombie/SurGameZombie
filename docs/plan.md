@@ -245,7 +245,7 @@ Un cliente nunca modifica salud, inventario ni la posición de otro peer.
 
 Una regla scopeada a `scripts/net/**` no ocupa contexto cuando estás trabajando en la UI.
 
-**Skills en `.claude/skills/`** — procedimientos repetibles. Solo se carga el nombre y la descripción al inicio; el cuerpo se carga cuando se invoca. Candidatos obvios: "agregar un item nuevo", "agregar un tipo de zombie", "correr el test de dos instancias". Anthropic es explícito: un procedimiento de 30 líneas va en un skill, no en `CLAUDE.md`.
+**Skills en `.claude/skills/`** — procedimientos repetibles. Solo se carga el nombre y la descripción al inicio; el cuerpo se carga cuando se invoca. Hoy hay uno: `barrido-navmesh`, el barrido de conectividad del NavMesh. Anthropic es explícito: un procedimiento de 30 líneas va en un skill, no en `CLAUDE.md`.
 
 **Hooks en `settings.json`** — para lo que tiene que pasar **determinísticamente**. Correr el linter después de cada edición, correr los tests antes de un commit. La diferencia clave: que el modelo *decida* correr el formatter no es lo mismo que el formatter *corriendo automáticamente*. Un `PreToolUse` hook puede inspeccionar cualquier llamada y bloquearla con exit code 2.
 

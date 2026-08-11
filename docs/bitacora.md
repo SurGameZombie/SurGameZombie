@@ -30,7 +30,7 @@ Los `[DECIDIR]` que quedan abiertos en `docs/design.md` no bloquean v0.1.
 | | |
 |---|---|
 | Organización GitHub | `SurGameZombie` |
-| Repositorio | `SurGameZombie` (privado) |
+| Repositorio | `SurGameZombie` (público, desde el 6/8/2026) |
 | Ruta local | `C:\Proyectos\SurGameZombie` en ambas máquinas |
 | Mail del proyecto | Gmail dedicado, con verificación en dos pasos |
 | Roles | Ambos Owner de la organización y con permiso de escritura en el repo |
