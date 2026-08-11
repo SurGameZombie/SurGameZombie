@@ -384,6 +384,17 @@ no un feature que se agrega.
 
 ## Registro
 
+**[entre el 7 y el 10/8/2026]** — **La mentira 3 de F4 se jugó con dos instancias y el host
+la rechazó.** Un cliente le mandó `apply_stack_added` al `InventorySync` de otro jugador por
+el path directo y las 99 palancas no aparecieron del otro lado, así que la autoridad de ese
+nodo quedó en el host: es exactamente lo que ese control existía para probar. **Fue un
+playtest manual, no un test automatizado** —no hay nada en `tests/` que lo cubra, porque
+hace falta un segundo peer de verdad—, y **no quedó anotada la fecha exacta ni hay commit
+asociado**, de ahí el rango. Cierra esa parte del `Not-tested:` de `2d417f5` y nada más: el
+snapshot al conectarse, el stream de deltas y el descarte por desincronización de `50d33d0`
+siguen sin cruzar el cable, igual que las mentiras 1 y 2 de F4. Tampoco es el playtest de
+quince minutos de v0.3, que sigue pendiente.
+
 **[6/8/2026]** — **Se jugó el playtest de v0.2 y v0.2 quedó cerrada.** Quince minutos, los
 dos, sin código a la vista, como manda la regla operativa 5 de
 `docs/investigacion-claude-code.md`. **Salió bien: ningún bug nuevo.** Es la primera vez que
