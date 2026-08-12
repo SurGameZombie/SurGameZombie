@@ -197,6 +197,14 @@ arrancar** en vez de escribir mil líneas.
 Si la sesión se está haciendo larga y notás que estás perdiendo el hilo de qué archivos ya
 tocaste, decilo y sugerí cortar ahí y arrancar limpio.
 
+## Herramientas nuevas
+
+**Antes de sumar cualquier MCP, skill, plugin, connector o hook se consulta el catálogo**
+en `C:\ClaudeMCPsPlugingsSkillsETC`, que ya tiene la decisión tomada sobre cada una y el
+porqué. Las reglas —orden de lectura, qué hacer con un veredicto `peligroso`, y dónde deja
+este proyecto su propia decisión— están en `.claude/rules/herramientas.md`, que se carga
+siempre.
+
 ## Qué NO hacer
 
 - **No inventar APIs de Godot.** Ver `.claude/rules/limites.md`.
