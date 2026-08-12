@@ -1,4 +1,26 @@
 {
+  "permissions": {
+    "additionalDirectories": [
+      "C:\\ClaudeMCPsPlugingsSkillsETC"
+    ],
+    "deny": [
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/*.md)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/.gitignore)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/.claude/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/skills/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/plugins/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/mcp/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/connectors/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/hooks/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/comandos/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/otros/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/comparativas/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/propio/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/investigacion/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/plantillas/**)",
+      "Edit(//c/ClaudeMCPsPlugingsSkillsETC/proyectos/webpersonal/**)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
