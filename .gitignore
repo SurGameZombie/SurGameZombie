@@ -27,6 +27,14 @@ export_presets.cfg
 # no está ignorado y un `git add` amplio se lo lleva.
 .claude/settings.local.json
 
+# Material para Mathi. Es de la máquina de cada uno, no del proyecto.
+#
+# Va acá por lo mismo que el bloque de arriba: hasta ahora la exclusión existía solo
+# en un archivo local de la PC de escritorio, así que en cualquier clon nuevo —esta
+# laptop, o el día que Mathi clone— la carpeta aparece como una más y un `git add`
+# amplio se la lleva al repo.
+para-mathi/
+
 # Sistema
 .DS_Store
 Thumbs.db
