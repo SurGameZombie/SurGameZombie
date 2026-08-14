@@ -38,21 +38,10 @@ muchas veces alcanza con revertir ese commit y listo.
 
 ### Formato del mensaje
 
-```
-tipo(scope): qué cambió, en una línea
-
-Por qué se hizo, no qué se hizo. El diff ya dice qué.
-
-Rejected: alternativa descartada | razón
-Directive: instrucción para quien toque esto en el futuro
-Tested: qué se verificó y cómo
-Not-tested: qué NO se verificó y por qué
-```
-
-**Tipos:** `feat` (algo nuevo), `fix` (un arreglo), `refactor` (reestructurar sin
-cambiar comportamiento), `docs`, `chore` (config y mantenimiento), `test`.
-
-**Scopes:** `net`, `player`, `enemy`, `inventory`, `survival`, `world`, `ui`.
+La plantilla —el bloque con los trailers, la lista de tipos y la de scopes— vive entera en
+`.claude/rules/commits.md`, que es la versión que gobierna. Acá va el porqué, no la
+plantilla: mientras estuvo copiada en los dos lados, esta copia se quedó sin `Tested-later:`
+dos días después de que el trailer se creara.
 
 Ejemplo real:
 
