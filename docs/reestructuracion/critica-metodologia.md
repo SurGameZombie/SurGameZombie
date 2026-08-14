@@ -145,6 +145,12 @@ equivalentes—, no hace falta esperar la verificación para hacerlo.
 matcher acepta el motivo de carga (`session_start`, `path_glob_match`, `compact`). Un hook
 de dos líneas que loguee el motivo contesta la pregunta en una sesión.
 
+> **Aplicado el 13/8/2026.** El frontmatter se sacó de los tres archivos. La prosa
+> residente baja de 444 a **429 líneas** medidas, así que todas las cifras de 444 que
+> aparecen más abajo —H10 y la sección 3— son de antes del arreglo y quedan como estaban:
+> el argumento no cambia, el número sí. **Sigue sin verificarse** el comportamiento después
+> de un `/compact`, que es la premisa de todo esto.
+
 ---
 
 ### H2. "Claude Code no commitea por iniciativa propia" es prosa, y el permiso dice que sí puede

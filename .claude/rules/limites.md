@@ -1,8 +1,3 @@
----
-paths:
-  - "**"
----
-
 # Límites
 
 Qué no podés verificar, qué no sabés, y qué no es tuyo. Estas tres secciones vivían en

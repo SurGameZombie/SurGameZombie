@@ -38,20 +38,28 @@ Cinco archivos de prosa, más el índice de memoria. **(medido: `wc -l` y `wc -c
 |---|---:|---:|---|---|---|
 | `~/.claude/CLAUDE.md` | 3 | 224 | Siempre, en todo proyecto de esta máquina | **No** — está en el home | Joaco |
 | `CLAUDE.md` (raíz) | 225 | 10.654 | Siempre, al abrir sesión en este repo | Sí | Joaco + Claude Code |
-| `.claude/rules/commits.md` | 116 | 4.965 | `paths: ["**"]` | Sí | Joaco + Claude Code |
-| `.claude/rules/limites.md` | 43 | 1.802 | `paths: ["**"]` | Sí | Joaco + Claude Code |
-| `.claude/rules/herramientas.md` | 57 | 2.535 | `paths: ["**"]` | Sí | Joaco + Claude Code |
+| `.claude/rules/commits.md` | 111 | 4.940 | Siempre — sin frontmatter `paths:` | Sí | Joaco + Claude Code |
+| `.claude/rules/limites.md` | 38 | 1.777 | Siempre — sin frontmatter `paths:` | Sí | Joaco + Claude Code |
+| `.claude/rules/herramientas.md` | 52 | 2.510 | Siempre — sin frontmatter `paths:` | Sí | Joaco + Claude Code |
 
-**Total residente: 444 líneas / 20.180 bytes de prosa antes de que se escriba una sola
-línea de código** (medido, sumando los cinco). Las líneas de frontmatter YAML de cada rule
-están incluidas en ese conteo.
+**Total residente: 429 líneas / 20.105 bytes de prosa antes de que se escriba una sola
+línea de código** (medido, sumando los cinco).
 
-El `paths: ["**"]` de las tres rules es literal en el frontmatter **(leído)**: el scope es
-todo el repo, así que en la práctica se comportan como una extensión de `CLAUDE.md`. Las
-dos primeras lo dicen explícitamente en su propio cuerpo — `limites.md` abre con "estas
-tres secciones vivían en `CLAUDE.md` y se movieron acá para bajarlo de 200 líneas"
-**(leído)**, y `herramientas.md` con "el scope es todo el repo porque la decisión de sumar
-una herramienta no nace tocando un archivo en particular" **(leído)**.
+Las tres rules **no declaran `paths:`**, y eso es lo que hace que carguen siempre: la
+documentación oficial dice que una regla sin ese frontmatter *"se carga al arranque con la
+misma prioridad que `.claude/CLAUDE.md`"* y **se re-inyecta desde disco al compactar**,
+mientras que una con `paths:` se pierde hasta que se vuelva a leer un archivo que machee.
+Las dos primeras explican en su propio cuerpo por qué el scope es todo el repo —
+`limites.md` abre con "estas tres secciones vivían en `CLAUDE.md` y se movieron acá para
+bajarlo de 200 líneas" **(leído)**, y `herramientas.md` con "el scope es todo el repo
+porque la decisión de sumar una herramienta no nace tocando un archivo en particular"
+**(leído)**.
+
+> *(Corregido el 13/8/2026, en el mismo commit que lo cambió. Este mapa decía que las tres
+> declaraban `paths: ["**"]` y que el conteo residente era de 444 líneas. Era cierto cuando
+> se escribió: el frontmatter se sacó unas horas después, por el hallazgo H1 de
+> `critica-metodologia.md`. El `**` no ahorraba contexto —un glob que machea todo no filtra
+> nada— y las metía en el bucket que no sobrevive a la compactación.)*
 
 **El índice de memoria** también entra siempre: `~/.claude/projects/C--Proyectos-SurGameZombie/memory/MEMORY.md`,
 6 líneas con 4 entradas **(medido)**. Los memos en sí —27 a 30 líneas cada uno— no se
@@ -910,7 +918,7 @@ llega a este proyecto solo si alguien lo transcribe.** No hay canal automático.
 1. El prompt del harness: entorno, plataforma, shell, directorio de trabajo, scratchpad, y
    el directorio adicional del catálogo.
 2. `~/.claude/CLAUDE.md` (3 líneas) y `CLAUDE.md` (225).
-3. Las tres rules de scope `**`: `commits.md`, `limites.md`, `herramientas.md` (216 líneas).
+3. Las tres rules sin `paths:`: `commits.md`, `limites.md`, `herramientas.md` (201 líneas).
 4. `MEMORY.md`, el índice de 4 memorias.
 5. El listado de skills disponibles: solo nombre y descripción.
 6. El listado de tools, con la mayoría **diferidas** — se cargan sus esquemas cuando hacen

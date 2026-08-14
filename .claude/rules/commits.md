@@ -1,8 +1,3 @@
----
-paths:
-  - "**"
----
-
 # Commits
 
 Reglas operativas. El porqué de cada una está en `docs/proceso.md` §1 — leerlo antes de

@@ -1,8 +1,3 @@
----
-paths:
-  - "**"
----
-
 # Herramientas nuevas
 
 Antes de sumar **cualquier** MCP, skill, plugin, connector o hook, se consulta primero el
