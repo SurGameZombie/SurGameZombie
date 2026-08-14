@@ -319,6 +319,58 @@ alcance a inicializar la perdedora antes de que la otra termine de crear los dir
 → **No hay nada que arreglar.** Si molesta el ruido, correr una instancia sola una vez
 antes del playtest deja la caché armada y los errores no vuelven a aparecer.
 
+**Las cuatro reglas `ask` sobre `git commit` y `git push` no piden confirmación.** Se
+escribieron el 13/8/2026 en `.claude/settings.json` —el archivo que viaja— justamente para
+que la regla de `.claude/rules/commits.md` dejara de ser solo prosa. `0c5f9bf` las dejó
+anotadas como no verificadas: *"no se vio el prompt todavía… Se ve en la primera sesión
+nueva"*.
+
+**Qué se probó, el 14/8/2026, en la primera sesión nueva desde entonces.** Se esperaba un
+prompt de confirmación antes de cada commit. No apareció **ninguno**, en los dos caminos:
+
+| Comando | Shell | Machea `ask` | Prompt |
+|---|---|---|---|
+| `git commit -F <archivo>` | Bash | `Bash(git commit *)` | no |
+| `git commit --allow-empty -m …` | PowerShell | `PowerShell(git commit *)` | no |
+
+El commit de prueba de PowerShell se deshizo con `git reset --hard`; no quedó en la
+historia.
+
+**Esto no es una config mal puesta de este lado: la doc oficial dice que no debería pasar.**
+Consultada el 14/8/2026, con Claude Code **2.1.232** corriendo. Las cuatro citas, textuales:
+
+| Dónde | Qué dice |
+|---|---|
+| `permission-modes` → *Auto mode* | *"Explicit ask rules still force a prompt."* |
+| `permission-modes` → *Available modes* | *"These controls apply in every mode, including `bypassPermissions`: deny rules and explicit ask rules"* |
+| `permissions` → *Manage permissions* | *"a matching ask rule prompts even when a more specific allow rule also matches the same call"* |
+| `permissions` → *Sandboxing* | *"Content-scoped ask rules like `Bash(git push *)` still force a prompt"* |
+
+La última cierra el caso: nuestras cuatro reglas son exactamente esa forma —`ask`
+content-scoped sobre `git commit` y `git push`—, y la doc las nombra como las que siguen
+prompteando incluso donde un `ask` de tool entero no lo haría.
+
+Con eso quedan descartadas las tres explicaciones que había del lado del proyecto: que un
+cambio de permisos no tome efecto en caliente (las reglas estaban commiteadas antes de que
+arrancara la sesión), que el `allow` de `settings.local.json` las tape (tercera cita), y el
+modo de permisos (primera y segunda). **Lo que queda es un gap entre lo documentado y lo
+observado**, y la versión va anotada porque el feature es reciente y esto puede ser
+específico de ella.
+
+→ **Mientras el gap exista, no hay red abajo de la regla de `.claude/rules/commits.md`.**
+Es prosa otra vez, que es exactamente el estado que la decisión 2 del 13/8 creía haber
+cerrado.
+
+→ **La mitigación es un hook `PreToolUse`, y no depende de que esto se resuelva.** Un hook
+que sale con código 2 corta la llamada **antes** de que se evalúen las reglas de permiso
+—*"A hook that exits with code 2 stops the tool call before permission rules are
+evaluated"*—, así que no lo afecta el mismo gap. Es además lo que ya dicen `plan.md` §5
+(*"si escribís 'siempre que X, hacé Y' en `CLAUDE.md`, probablemente debería ser un hook"*)
+y las dos fuentes de `critica-metodologia.md` §0: *"Put guardrails in hooks"* y *"cuando
+algo absolutamente no debe pasar, una instrucción es la herramienta equivocada"*. Queda en
+Pendiente, sin escribir todavía: lo que sí hay que traerse de `0c5f9bf` es **verificarlo en
+una sesión distinta de la que lo escriba**, que es el paso que ese commit se salteó.
+
 ---
 
 ## Riesgos identificados
@@ -367,6 +419,14 @@ no un feature que se agrega.
       `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y borrado el
       14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
+- [ ] **Mover el guardarraíl del commit de una regla `ask` a un hook `PreToolUse`.** Las
+      cuatro `ask` de `.claude/settings.json` no disparan, y la doc oficial dice que
+      deberían: es un gap del producto, no algo que este repo pueda arreglar cambiando
+      config (ver Problemas, 14/8/2026). **El hook no espera a que ese gap se cierre** — es
+      la mitigación mientras exista, y la única que no depende de las reglas de permiso,
+      porque un `exit 2` corta antes de que se evalúen. Un hook sobre `Bash` y `PowerShell`
+      que machee `git commit` y `git push`. **Verificarlo en una sesión distinta de la que
+      lo escriba**, que es el paso que `0c5f9bf` se salteó
 - [ ] **Regla de preaprobación de tools de MCP.** Antes de sumar una tool de MCP al
       allowlist, chequear si mezcla lectura y escritura sobre un archivo versionado crítico;
       si mezcla, excluirla o aceptar el riesgo por escrito. Va en

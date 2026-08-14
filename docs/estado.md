@@ -184,15 +184,14 @@ máquina**, que en el otro clon apuntan a un home que no existe.
 | `.claude/settings.json` — los 2 hooks, los 15 `deny` del catálogo, los 4 `ask` de git | `.claude/settings.local.json` — permisos, con el home de cada uno adentro |
 | `CLAUDE.md`, las 5 rules, el skill, `docs/`, `tests/`, `tools/` | `~/.claude/CLAUDE.md`, la skill `catalogo-claude` y la memoria del proyecto |
 
-**Las cuatro reglas `ask` de `git commit` y `git push` están puestas y no se las vio
-disparar.** Están en `.claude/settings.json`, que viaja, y la intención era que cualquier
-clon nuevo arrancara con el prompt puesto. Medido el 14/8/2026, primera sesión nueva desde
-que se escribieron: un `git commit` por Bash y otro por PowerShell pasaron **los dos sin
-pedir confirmación**. Causa sin determinar. El sospechoso es `permissions.defaultMode:
-"auto"` en `~/.claude/settings.json` —que no viaja, y con el que en esta sesión no prompteó
-**ningún** comando, ni los que no machean ninguna regla `allow`—, pero no está confirmado:
-no se puede cambiar el modo desde adentro de la sesión que se está midiendo. Detalle en
-`bitacora.md` → Problemas.
+**Las cuatro reglas `ask` de `git commit` y `git push` están puestas y no disparan.** Están
+en `.claude/settings.json`, que viaja, y la intención era que cualquier clon nuevo arrancara
+con el prompt puesto. Medido el 14/8/2026 en Claude Code 2.1.232: un `git commit` por Bash y
+otro por PowerShell pasaron **los dos sin pedir confirmación**. La documentación oficial dice
+que eso no debería pasar en ningún modo —*"Explicit ask rules still force a prompt"*—, así
+que no es una config mal puesta de este lado: **es comportamiento documentado que no coincide
+con el observado.** Hasta que se cierre, lo único que frena un commit por iniciativa propia
+es la prosa de `.claude/rules/commits.md`. Detalle y citas en `bitacora.md` → Problemas.
 
 Lo que sigue copiado a mano en varios lugares es la ruta
 `C:\Godot\Godot_v4.7.1-stable_win64.exe` (par D4 de `inventario-pares.md`); poner Godot en
