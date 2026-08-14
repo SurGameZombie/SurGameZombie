@@ -1,7 +1,9 @@
 # Permisos curados de `.claude/settings.local.json`
 
 > **Documento de trabajo de la Parte 3. Aplicado el 11/8/2026: 78 entradas → 27; el mismo
-> día entró una (→ 28) y salieron dos por la decisión 3 (→ 26).**
+> día entró una (→ 28) y salieron dos por la decisión 3 (→ 26).** El 13/8 se resolvió la
+> decisión 2, y sus cuatro reglas `ask` **no** viven acá: van en `.claude/settings.json`,
+> que sí viaja.
 > Se borra cuando se absorba en `ESTADO.md`.
 
 El archivo está en `.gitignore:28`, o sea que **es por máquina**: esta curación vale para
@@ -196,16 +198,17 @@ igual.
 
 ---
 
-## Decisiones: dos abiertas, una resuelta
+## Decisiones: una abierta, dos resueltas
 
 1. **Asimetría de git entre shells.** `PowerShell(git *)` aprueba todo git —incluido
    `push --force` y `reset --hard`—, mientras que Bash tiene tres entradas granulares.
    Conviene elegir un criterio y aplicarlo a los dos lados.
 
-2. **`Bash(git commit *)` y `PowerShell(git *)` pre-aprueban el `git commit`.** No
-   contradice `.claude/rules/commits.md` —esa regla es de comportamiento y la sigo
-   igual—, pero el permiso saca el prompt del sistema, que era la última red si la regla
-   fallara.
+2. ~~**`Bash(git commit *)` y `PowerShell(git *)` pre-aprueban el `git commit`.**~~
+   **Resuelta el 13/8/2026: cuatro reglas `ask` sobre `git commit` y `git push`, en
+   `.claude/settings.json`.** Los `allow` quedaron como estaban: no hizo falta tocarlos.
+
+   Ver "Decisión 2, resuelta" abajo.
 
 3. ~~**Dos de las cinco de godot-ai aprueban escrituras.**~~ **Resuelta el 11/8/2026:
    `project_manage` e `input_map_manage` salieron del allowlist.** Vuelven a pedir
@@ -213,6 +216,61 @@ igual.
    y `session_manage`, que solo leen.
 
    Ver "Decisión 3, resuelta" abajo.
+
+## Decisión 2, resuelta: `ask` sobre `git commit` y `git push`
+
+`.claude/rules/commits.md` dice que Claude Code no commitea por iniciativa propia, y hasta
+acá eso era todo lo que había: una regla de comportamiento. La doc de permisos de Claude
+Code marca el límite de eso sin vueltas — *"las reglas de permiso las hace cumplir Claude
+Code, **no el modelo**: las instrucciones de tu prompt o de `CLAUDE.md` moldean lo que
+Claude intenta hacer, pero no cambian lo que Claude Code permite"*. O sea que la prosa y el
+permiso venían diciendo cosas distintas.
+
+```
+"ask": [
+  "Bash(git commit *)",
+  "Bash(git push *)",
+  "PowerShell(git commit *)",
+  "PowerShell(git push *)"
+]
+```
+
+### No hizo falta sacar ningún `allow`
+
+Las reglas se evalúan en orden **deny → ask → allow**, y la especificidad no cambia ese
+orden: *"una regla `ask` que machea prompta aunque una `allow` más específica machee la
+misma llamada"*. Así que `Bash(git commit *)` y `PowerShell(git *)` siguen en el allowlist
+tal cual, y el prompt aparece igual.
+
+### Por qué en `.claude/settings.json` y no en el local
+
+Es la corrección de un error de la primera versión de este mismo arreglo. Las cuatro reglas
+entraron primero en `.claude/settings.local.json` —el archivo que este documento cura— y
+ese archivo **no viaja** (`.gitignore:28`). El resultado era la misma regla escrita a mano
+en dos máquinas, sin nada que las comparara: un par duplicado nuevo, exactamente del tipo
+que `inventario-pares.md` existe para no fabricar.
+
+En `settings.json` la regla viaja con el repo, igual que los dos hooks, que ya están ahí
+por el mismo motivo. **Consecuencia buscada: cualquier clon nuevo —la máquina de Mathi
+incluida— arranca con el prompt puesto**, sin que nadie tenga que acordarse de ponerlo.
+
+### `git push` a secas también machea
+
+Verificado contra la doc antes de escribir la regla, porque era el agujero obvio: cuando el
+`*` va al final con un espacio delante, exige límite de palabra *"seguido de un espacio o
+de fin de string"*. `Bash(git push *)` machea `git push` pelado, no solo
+`git push origin main`.
+
+### Lo que esto NO resuelve
+
+La decisión 1 sigue abierta. `PowerShell(git *)` aprueba todo el resto de git —`reset
+--hard` incluido— y estas cuatro reglas solo cubren los dos verbos que tienen consecuencia
+hacia afuera.
+
+**Y falta ver el prompt.** Medido el 13/8/2026: un `git commit` hecho en la misma sesión en
+que las reglas se escribieron **no** disparó ningún prompt. No sé si es que un cambio de
+permisos no toma efecto en caliente o si fue otra cosa; lo que sí sé es que no se vio.
+Confirmarlo en la primera sesión nueva, antes de darlo por puesto.
 
 ## Decisión 3, resuelta: `project_manage` e `input_map_manage` fuera del allowlist
 
