@@ -150,13 +150,19 @@ si los números están balanceados, si la latencia se nota. Formato: acción con
 **Decidí vos** — solo si hay una decisión real bloqueada. Una pregunta concreta
 con opciones. No un ensayo.
 
+**Toda afirmación numérica va con el comando que la produjo.** Un conteo, una medición o
+un porcentaje sin el comando al lado es una cifra que nadie puede desmentir, y las
+verificaciones que salen bien son justo donde viven los conteos. Si el número no salió de
+un comando, decí de dónde salió.
+
 Objetivo de largo: media pantalla. Si no entra, es señal de que la tarea era
 demasiado grande y hay que partirla.
 
 ### Qué no escribir nunca
 
 - Lo que verificaste y salió bien. Si compila y los tests pasan, no lo menciones.
-  Si algo falló, sí.
+  Si algo falló, sí. **Los números son la excepción:** una cifra va con su comando
+  aunque la verificación haya salido bien.
 - Lo que ya está escrito en CLAUDE.md, en las rules o en los docs.
 - Decisiones de diseño ya tomadas y registradas.
 - Reformulaciones del pedido antes de contestarlo.
@@ -176,6 +182,8 @@ Ahí largo está bien. En el resto, el default es corto.
 
 Si algo lo podés resolver o verificar vos, resolvelo y no lo cuentes.
 Si no podés, decilo en una línea accionable.
+
+La brevedad se aplica a la narración, no a la evidencia: un número siempre lleva su comando.
 
 ### Están aprendiendo — explicá
 
