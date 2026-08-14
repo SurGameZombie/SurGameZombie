@@ -1,9 +1,13 @@
 # Mapa del sistema de trabajo
 
 > **Documento de trabajo de la reestructuración. No es documentación final del proyecto.**
-> Se absorbe en `ESTADO.md` cuando llegue esa parte, o se borra si deja de hacer falta.
-> Hermano de `inventario-pares.md` (qué datos están duplicados) y `permisos-curados.md`
-> (por qué el allowlist era como era).
+> Se absorbe en `docs/estado.md` cuando llegue esa parte, o se borra si deja de hacer falta.
+> Hermano de `inventario-pares.md` (qué datos están duplicados).
+>
+> `permisos-curados.md` —el tercer hermano, "por qué el allowlist era como era"— se absorbió
+> en `docs/estado.md` §7–§8 y se borró el 14/8/2026. Lo que este mapa le cita y **no** quedó
+> en `estado.md` sigue en el historial:
+> `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 
 Levantado el **13/8/2026**, desde el lado de Claude Code: qué se me carga, qué me llega,
 qué ejecuta el harness sin pasar por mí, y qué de todo eso viaja entre las dos máquinas.
@@ -392,7 +396,13 @@ Cierra con tres listas operativas: lo que **no** hay que arreglar (2 ítems), lo
 Parte 1 (8 ítems con su commit), y los candidatos a la tanda 2 (5 ítems ordenados por qué
 rompe silencioso).
 
-## 3.12 `docs/reestructuracion/permisos-curados.md` — 312 líneas
+## 3.12 `docs/reestructuracion/permisos-curados.md` — borrado el 14/8/2026
+
+*Describe un archivo que ya no está: se absorbió en `docs/estado.md` §7–§8 y se borró. Las
+dos decisiones resueltas y el eje de qué viaja por scope de proyecto están allá; el resto
+—la partición de las 78, la tabla de lo que el harness protege solo, el relato del 2/8—
+sigue solo en git. Tenía 370 líneas al borrarlo, no las 312 que dice este encabezado: creció
+después de que se escribiera esta sección.*
 
 La curación de `.claude/settings.local.json` del 11/8/2026: **78 entradas → 27**, y hoy 26
 **(leído)**. Vale más el porqué que la lista, y el doc lo dice: la capa de permisos de

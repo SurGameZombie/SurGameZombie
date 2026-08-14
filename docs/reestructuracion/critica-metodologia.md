@@ -2,7 +2,11 @@
 
 > **Documento de trabajo de la reestructuración. No es documentación final del proyecto.**
 > Segunda mitad de `mapa-metodologia.md`: aquel describe, este juzga. Se absorbe en
-> `ESTADO.md` / `PLAN.md` cuando lleguen esas partes, o se borra si deja de hacer falta.
+> `docs/estado.md` / `PLAN.md` cuando lleguen esas partes, o se borra si deja de hacer falta.
+>
+> `permisos-curados.md`, que este doc cita en H2, se absorbió en `docs/estado.md` §7–§8 y se
+> borró el 14/8/2026. Lo que no quedó allá sigue en el historial:
+> `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 
 Escrita el **13/8/2026**, contra dos cosas: la documentación oficial de Anthropic, y la
 evidencia medible del propio repo. Todo número de acá está medido hoy; los que no pude

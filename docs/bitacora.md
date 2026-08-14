@@ -361,6 +361,19 @@ no un feature que se agrega.
          el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
          `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
+- [ ] **Asimetría de git entre shells.** `PowerShell(git *)` aprueba todo git —`push --force`
+      y `reset --hard` incluidos—, mientras que Bash tiene tres entradas granulares.
+      Conviene elegir un criterio y aplicarlo a los dos lados. Viene de
+      `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y borrado el
+      14/8/2026; el original se recupera con
+      `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
+- [ ] **Regla de preaprobación de tools de MCP.** Antes de sumar una tool de MCP al
+      allowlist, chequear si mezcla lectura y escritura sobre un archivo versionado crítico;
+      si mezcla, excluirla o aceptar el riesgo por escrito. Va en
+      `.claude/rules/herramientas.md` cuando se escriba — todavía no está en ningún rule.
+      Viene de `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y
+      borrado el 14/8/2026; el original se recupera con
+      `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 - [x] **Instalar gdUnit4 — hecho el 6/8/2026, v6.2.0**, bajando el `.zip` del tag de GitHub
       porque el AssetLib sigue fallando (ver "Problemas"). Falta un solo paso manual:
       **prenderlo en Project → Plugins desde el editor.** El runner de línea de comandos no
