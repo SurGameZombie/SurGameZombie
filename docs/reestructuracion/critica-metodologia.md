@@ -501,6 +501,13 @@ consultable. En ese caso lo correcto no es un puntero sino un *extracto generado
 y con el commit del que salió, para que al menos se pueda fechar la divergencia. No sé cuál
 de los dos casos es; es la primera pregunta a contestar.
 
+> **Contestado el 14/8/2026: sí puede.** Clona el repo público con `git clone` en un sandbox
+> propio y lee con `grep`, `wc` y `git log` — así verificó esta semana, incluidos los
+> reportes de acá. O sea que **el puntero es alcanzable y el extracto fechado no hace
+> falta.** La acción queda como estaba en la tabla de la tanda C: ~35 líneas → 1, apuntando
+> hoy a `docs/design.md` y `docs/decisions/`, y del lado del chat de criterio. Lo que sigue
+> sin cambiar es que yo no puedo leer esa sección: juzgo el principio, no el texto.
+
 ---
 
 ### H12. La regla de push: coincido en que falta acá, y va en dos registros

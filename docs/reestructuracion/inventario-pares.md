@@ -116,7 +116,7 @@ al inventario y se dejan acá para que la familia esté completa.)*
 | E2 | **La tabla de autoridad de red** — `CLAUDE.md` · `.claude/rules/netcode.md` · `docs/netcode.md` | (A) — 3 copias de la misma tabla de 6 filas. Retrospectiva §2.9 y §5.2 pidieron recortar dos |
 | E3 | **La trampa de `@rpc("authority")`** — `docs/netcode.md` ×2 · `rules/netcode.md` · `world.gd` · `bitacora.md` · trailer `Rejected:` de `9f94fb1` | (A) — 6 copias. Es D4 de la retrospectiva |
 | E4 | **Tabla Godot 3 → Godot 4** — `CLAUDE.md` · `rules/gdscript.md` | (D) — asumida y anotada en el propio texto |
-| E7 | **`CLAUDE.md` bajo 200 líneas** — `plan.md` cita la recomendación · retrospectiva §2.8 midió 213 · **hoy 217** | (A) 🔒 — el número sube solo y no hay mecanismo de contención |
+| E7 | **`CLAUDE.md` bajo 200 líneas** — `plan.md` cita la recomendación · retrospectiva §2.8 midió 213 · **233 el 14/8/2026** | (A) 🔒 — el número sube solo y no hay mecanismo de contención. El "hoy 217" que decía esta fila era del 10/8 y quedó viejo sin que nada avisara, que es el par mordiéndose la cola |
 | E8 | **El bloque de formato del mensaje de commit** — `.claude/rules/commits.md` · `docs/proceso.md` §1 | (D) 💥 **había divergido**: la copia de `proceso.md` se quedó sin `Tested-later:` dos días después de que el trailer se creara. **Cerrado el 14/8/2026** con el molde de `b1a6ec5`: la plantilla quedó entera en `commits.md` y `proceso.md` §1 pasó a puntero. No suma a los 53 abiertos |
 
 ---
