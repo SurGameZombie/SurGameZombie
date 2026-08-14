@@ -20,6 +20,14 @@ Si en ese mismo pedido hay más de un cambio lógico, la autorización cubre tod
 que hagan falta para separarlos bien. **Un commit = un cambio lógico** sigue mandando; que
 lo hayan pedido no es excusa para meter todo junto.
 
+### Un commit aprobado y sin pushear es un estado inválido
+
+Después de que Joaco aprueba un commit, **se le pregunta si se pushea.** Si se está armando
+una tanda de varios commits a propósito, se pregunta al cerrar la tanda.
+
+El repo es el único canal entre las dos máquinas y entre Joaco y Mathi: lo que no se
+pushea, para el resto del sistema no existe.
+
 ## Un commit = un cambio lógico
 
 Si el mensaje necesita un "y", son dos commits.
