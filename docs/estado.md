@@ -127,12 +127,22 @@ git log --grep="^Tested-later:" --format=%B | grep '^Tested-later:'  # la pagó,
 
 La deuda abierta son los hashes del primero que no aparecen citados en el segundo, **más**
 los citados cuyo propio trailer declara que el pago fue parcial. El `^` no es decorativo:
-sin él, `git log --grep="Not-tested"` devuelve **55** en vez de 52, porque machea tres
-commits que nombran el trailer en la prosa sin llevarlo.
+sin él, `git log --grep="Not-tested"` devuelve **60** en vez de 55, porque machea cinco
+commits que nombran el trailer en la prosa sin llevarlo. Dos de esos cinco son de hoy: el
+ruido crece más rápido que la deuda, porque cada vez que se escribe sobre la deuda se suma
+un falso positivo.
 
-Hoy hay **52 commits con `Not-tested:` real** sobre 81 totales y **2 con `Tested-later:`**:
-`a2b806b` → `7a4cbdd` y `cb6fd7c` → `2d417f5`. La resta mecánica daría **50 abiertos**, pero
-los dos pagos dicen en su propio texto que cubren una parte: **la deuda de verdad son 52**.
+**Medido el 15/8/2026:** hay **55 commits con `Not-tested:` real** sobre 89 totales y **4
+con `Tested-later:`** — `ce5f439` → `6cf1adb`, `a3e9871` → `0c5f9bf`, `a2b806b` → `7a4cbdd`
+y `cb6fd7c` → `2d417f5`. La resta mecánica daría **51 abiertos**, pero tres de los cuatro
+pagos declaran en su propio texto que cubren una parte, así que `0c5f9bf`, `7a4cbdd` y
+`2d417f5` vuelven a la lista: **la deuda de verdad son 54**. El único pago entero es
+`ce5f439` → `6cf1adb`.
+
+**Un caso que el conteo mecánico no ve:** lo que `a3e9871` dejó sin pagar de `0c5f9bf` era
+que funcionara el hook que reemplaza a las reglas, y `ce5f439` lo verificó — pero cita solo
+a `6cf1adb`, así que `0c5f9bf` cuenta como parcial hasta que alguien lo cite. Un pago sin
+citar no existe para el comando, que es la contracara de que el comando no sepa leer prosa.
 
 **La suite de gdUnit4 pasa entera**, corrida el 14/8/2026 con el comando de §2: 6 de 6
 suites, **49 de 49 casos**, 0 errores, 0 fallas, 0 flaky, 0 huérfanos, exit 0. Cubre
