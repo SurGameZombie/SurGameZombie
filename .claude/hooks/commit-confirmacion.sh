@@ -2,11 +2,18 @@
 # Hook PreToolUse: pide confirmación explícita antes de cada `git commit` y de cada
 # `git push`, por Bash y por PowerShell.
 #
-# Existe porque las cuatro reglas `ask` de `.claude/settings.json` **no disparan**
-# (docs/bitacora.md → Problemas, 14/8/2026). La doc oficial dice que deberían, así
-# que es un gap del producto y no algo que este repo pueda arreglar cambiando
-# config. Mientras el gap exista, sin este hook lo único que frena un commit por
-# iniciativa propia es la prosa de `.claude/rules/commits.md`.
+# No reemplaza a las cuatro reglas `ask` de `.claude/settings.json`: las complementa.
+# Las reglas sí disparan —verificado el 14/8/2026, ver docs/bitacora.md → Problemas—,
+# pero su patrón es un **prefijo literal**: `Bash(git commit *)` no matchea un
+# `git -c user.name=X commit`. El regex de acá abajo sí, porque tolera tokens
+# intermedios. Ese hueco es lo único que cubre este hook, y es real: está probado con
+# `git -c … commit`, y cualquier otra forma con flags entre `git` y el subcomando cae
+# igual.
+#
+# Cuando las dos capas matchean la misma llamada el prompt sale por la regla, no por
+# acá: *"a matching ask rule still prompts even when the hook returned `allow` or
+# `ask`"* (doc de permissions). Así que para probar que este hook aporta algo hay que
+# testearlo con una variante que la regla no agarre.
 #
 # **No reemplaza al `ask` conceptualmente:** pide confirmación, no bloquea. El
 # mecanismo es `permissionDecision: "ask"` con código de salida 0, NO un `exit 2`.
@@ -53,7 +60,7 @@ cat <<JSON
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "ask",
-    "permissionDecisionReason": "Esto es $accion. Se pide confirmación porque las cuatro reglas \`ask\` de .claude/settings.json no disparan —gap del producto, medido el 14/8/2026 en Claude Code 2.1.232, ver docs/bitacora.md → Problemas— y este hook es la mitigación mientras exista. Recordá que el default de .claude/rules/commits.md es preparar el mensaje y parar ahí: terminar una tarea no habilita a commitearla, y la autorización de un pedido no se hereda al siguiente. Si esto no lo pediste explícitamente ahora, decí que no."
+    "permissionDecisionReason": "Esto es $accion, en una forma que las reglas \`ask\` de .claude/settings.json no matchean —su patrón es un prefijo literal y este comando mete algo entre \`git\` y el subcomando—, así que la confirmación la pide este hook. Recordá que el default de .claude/rules/commits.md es preparar el mensaje y parar ahí: terminar una tarea no habilita a commitearla, y la autorización de un pedido no se hereda al siguiente. Si esto no lo pediste explícitamente ahora, decí que no."
   }
 }
 JSON

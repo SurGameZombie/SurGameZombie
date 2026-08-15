@@ -164,7 +164,7 @@ contra 20:13 del 6/8/2026, `ls -l --time-style=long-iso scenes/main/`) y los dos
 | Al zombie recién se lo puede matar en v0.5 | 6/8/2026 | `design.md` → Huecos |
 | `project_manage` e `input_map_manage` fuera del allowlist | 11/8/2026 | §8 |
 | `ask` sobre `git commit` y `git push`, en el settings que viaja | 13/8/2026 | `.claude/settings.json` |
-| El guardarraíl del commit pasa de regla `ask` a hook `PreToolUse` | 14/8/2026 | §8 |
+| El guardarraíl del commit suma un hook `PreToolUse` a la regla `ask` | 14/8/2026 | §8 |
 
 ## 8. Herramientas y configuración
 
@@ -185,22 +185,27 @@ máquina**, que en el otro clon apuntan a un home que no existe.
 | `.claude/settings.json` — los 3 hooks, los 15 `deny` del catálogo, los 4 `ask` de git | `.claude/settings.local.json` — permisos, con el home de cada uno adentro |
 | `CLAUDE.md`, las 5 rules, el skill, `docs/`, `tests/`, `tools/` | `~/.claude/CLAUDE.md`, la skill `catalogo-claude` y la memoria del proyecto |
 
-**Las cuatro reglas `ask` de `git commit` y `git push` están puestas y no disparan.** Están
-en `.claude/settings.json`, que viaja, y la intención era que cualquier clon nuevo arrancara
-con el prompt puesto. Medido el 14/8/2026 en Claude Code 2.1.232: un `git commit` por Bash y
-otro por PowerShell pasaron **los dos sin pedir confirmación**. La documentación oficial dice
-que eso no debería pasar en ningún modo —*"Explicit ask rules still force a prompt"*—, así
-que no es una config mal puesta de este lado: **es comportamiento documentado que no coincide
-con el observado.** Detalle y citas en `bitacora.md` → Problemas.
+**El guardarraíl del commit son dos capas, y las dos están verificadas.** Verificado el
+14/8/2026 en Claude Code 2.1.232, en una sesión recién abierta, de a un paso por vez y con
+captura de pantalla de cada prompt:
 
-**La mitigación es el tercer hook, `commit-confirmacion.sh`, y está escrita sin verificar.**
-Corre en `PreToolUse` sobre `Bash` y `PowerShell`, machea `git commit` y `git push`, y
-devuelve `permissionDecision: "ask"` con código de salida 0 — un `ask` emitido por un hook es
-un camino distinto del `ask` declarado como regla estática, que es el que no dispara. Pide
-confirmación, no bloquea. **Lo que falta probar es que el harness lo dispare y que el prompt
-aparezca**, y eso tiene que pasar en una sesión distinta de la que lo escribió: un hook
-escrito hoy se lee de la config que ya estaba cargada. Hasta entonces, lo que efectivamente
-frena un commit por iniciativa propia sigue siendo la prosa de `.claude/rules/commits.md`.
+| Capa | Dónde | Qué cubre | Prompt observado |
+|---|---|---|---|
+| Las 4 reglas `ask` | `.claude/settings.json`, que viaja | La forma canónica: `git commit …`, `git push …`, por Bash y por PowerShell | `Ask rule Bash(git commit *) overrides auto mode for this command.` |
+| `commit-confirmacion.sh` | `.claude/hooks/`, que viaja | Las variantes que el prefijo literal de la regla **no** matchea: `git -c … commit` y cualquier forma con flags entre `git` y el subcomando | `Hook PreToolUse:Bash requires confirmation for this command` |
+
+El hook corre en `PreToolUse` sobre `Bash` y `PowerShell` y devuelve `permissionDecision:
+"ask"` con código de salida 0: pide confirmación, no bloquea. Cuando las dos capas matchean
+la misma llamada, el prompt sale por la regla —*"a matching ask rule still prompts even when
+the hook returned `allow` or `ask`"`*—, así que el aporte del hook solo se ve en las llamadas
+que la regla no agarra.
+
+**Corrección de lo que decía esta sección antes:** el 14/8 a la mañana se midió que las
+cuatro reglas `ask` no disparaban y se concluyó que era un gap del producto. **Esa conclusión
+era falsa** — las reglas disparan. El síntoma de la mañana fue real pero quedó sin explicar;
+la única pista es que las dos fallas fueron en una sesión larga y los dos aciertos en una
+recién abierta con `/clear`, que es correlación y no causa probada. Detalle en
+`bitacora.md` → Problemas.
 
 Lo que sigue copiado a mano en varios lugares es la ruta
 `C:\Godot\Godot_v4.7.1-stable_win64.exe` (par D4 de `inventario-pares.md`); poner Godot en

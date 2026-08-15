@@ -350,22 +350,56 @@ La última cierra el caso: nuestras cuatro reglas son exactamente esa forma —`
 content-scoped sobre `git commit` y `git push`—, y la doc las nombra como las que siguen
 prompteando incluso donde un `ask` de tool entero no lo haría.
 
-Con eso quedan descartadas las tres explicaciones que había del lado del proyecto: que un
+Con eso quedaban descartadas las tres explicaciones que había del lado del proyecto: que un
 cambio de permisos no tome efecto en caliente (las reglas estaban commiteadas antes de que
 arrancara la sesión), que el `allow` de `settings.local.json` las tape (tercera cita), y el
-modo de permisos (primera y segunda). **Lo que queda es un gap entre lo documentado y lo
-observado**, y la versión va anotada porque el feature es reciente y esto puede ser
-específico de ella.
+modo de permisos (primera y segunda). La conclusión que se sacó fue **un gap entre lo
+documentado y lo observado**, y sobre esa conclusión se escribió el hook.
 
-→ **Mientras el gap exista, no hay red abajo de la regla de `.claude/rules/commits.md`.**
-Es prosa otra vez, que es exactamente el estado que la decisión 2 del 13/8 creía haber
-cerrado.
+### Esa conclusión estaba mal, y se cayó al verificarla
 
-→ **La mitigación es un hook `PreToolUse`, y no depende de que esto se resuelva.** El hook
-sale con código 0 y devuelve `permissionDecision: "ask"`: un `ask` **emitido por un hook**
-fuerza el prompt real incluso en modo auto, y el clasificador no lo puede aprobar en
-silencio. Consultada la doc de hooks el 14/8/2026. Es un camino distinto del `ask` declarado
-como regla estática, que es justo el que no dispara, así que el gap no se lo come.
+**Más tarde el mismo 14/8/2026, en una sesión recién abierta, las reglas `ask` dispararon.**
+Se repitió el test de a un paso por vez, con Joaco mirando la pantalla en el momento exacto
+y confirmando cada prompt con captura:
+
+| # | Comando | Shell | Prompt | Qué citó el cuadro |
+|---|---|---|---|---|
+| 1 | `git commit --allow-empty -m "test: bash"` | Bash | **sí** | `Ask rule Bash(git commit *) overrides auto mode for this command.` |
+| 2 | `git commit --allow-empty -m "test: powershell"` | PowerShell | **sí** | `Ask rule PowerShell(git commit *) overrides auto mode for this command.` |
+| 3 | `git -c user.name=X commit --allow-empty -m "test: solo hook"` | Bash | **sí** | `Hook PreToolUse:Bash requires confirmation for this command`, con el mensaje literal de `commit-confirmacion.sh` |
+
+Los tres commits de prueba se deshicieron con `git reset --hard 6cf1adb`; no quedaron en la
+historia.
+
+→ **No hay gap del producto.** La doc decía la verdad: las reglas `ask` content-scoped
+fuerzan el prompt en modo auto, y lo hicieron. La entrada de arriba —y `a3e9871`, que la
+commiteó— diagnosticaron mal un síntoma real.
+
+→ **Lo que el hook aporta no es lo que decía su comentario.** En los tests 1 y 2 matchearon
+la regla **y** el hook a la vez, y el prompt salió por la regla: la doc de `permissions` dice
+*"a matching ask rule still prompts even when the hook returned `allow` or `ask`"*, así que
+esos dos tests no probaban nada sobre el hook. El test 3 es el que lo aísla. La regla `ask`
+es `Bash(git commit *)`, **prefijo literal**, y un `-c` antes del subcomando no lo matchea;
+el regex del hook (`commit-confirmacion.sh:33`) sí, porque está escrito para tolerar tokens
+intermedios. Ahí salió el prompt del hook, solo.
+
+**O sea: el hook no es la mitigación de un gap del producto — es la cobertura de las
+variantes que el prefijo literal de la regla `ask` no matchea.** `git -c … commit` es la que
+está probada; cualquier otra forma con flags entre `git` y el subcomando cae en el mismo
+hueco. Las dos capas se complementan y ninguna sobra: la regla cubre la forma canónica, el
+hook cubre el resto.
+
+### La correlación con la duración de la sesión, que queda anotada sin explicación
+
+Las dos veces que la regla `ask` falló fue **esta mañana, en una sesión larga**. Las dos
+veces que funcionó fue **más tarde, en una sesión recién abierta con `/clear`**. Es la
+segunda vez que se repite el patrón.
+
+**Es una correlación, no una causa probada.** No se corrió ningún experimento que aísle la
+duración de la sesión como variable sola, y no se sabe qué otra cosa cambia entre una sesión
+larga y una nueva. Queda escrito porque si el síntoma vuelve, esta es la primera hipótesis a
+testear, y porque explicaría por qué la medición de la mañana era real y la conclusión que
+se sacó de ella no.
 
 **`exit 2` quedó descartado, y la razón importa.** Corta la llamada **antes** de que se
 evalúen las reglas de permiso —*"A hook that exits with code 2 stops the tool call before
@@ -429,18 +463,19 @@ no un feature que se agrega.
       `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y borrado el
       14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
-- [x] **Mover el guardarraíl del commit de una regla `ask` a un hook `PreToolUse` — escrito
-      el 14/8/2026, `.claude/hooks/commit-confirmacion.sh`. SIN VERIFICAR TODAVÍA: la
-      verificación tiene que pasar en una sesión distinta de esta.** Por eso sigue acá y no
-      se tacha del todo. Las cuatro `ask` de `.claude/settings.json` no disparan, y la doc
-      oficial dice que deberían: es un gap del producto, no algo que este repo pueda
-      arreglar cambiando config (ver Problemas, 14/8/2026). El hook no espera a que ese gap
-      se cierre — es la mitigación mientras exista. Machea `git commit` y `git push` sobre
-      `Bash` y `PowerShell`, y **devuelve `permissionDecision: "ask"` con código de salida
-      0**, no un código de salida bloqueante: pide confirmación, no bloquea. Qué falta
-      probar: que el harness lo dispare y que el prompt aparezca, por los dos caminos que
-      fallaron el 14/8. **Verificarlo en una sesión distinta de la que lo escribió**, que es
-      el paso que `0c5f9bf` se salteó
+- [x] **Sumar un hook `PreToolUse` al guardarraíl del commit — escrito y verificado el
+      14/8/2026, `.claude/hooks/commit-confirmacion.sh`. Cerrado.** Se verificó en una
+      sesión distinta de la que lo escribió, que es el paso que `0c5f9bf` se salteó, y de a
+      un paso por vez, con Joaco mirando la pantalla en el momento de cada llamada. Machea
+      `git commit` y `git push` sobre `Bash` y `PowerShell`, y **devuelve
+      `permissionDecision: "ask"` con código de salida 0**, no un código de salida
+      bloqueante: pide confirmación, no bloquea. **No reemplaza a las cuatro reglas `ask` de
+      `.claude/settings.json`: las complementa.** Las reglas sí disparan —el diagnóstico de
+      "gap del producto" era falso, ver Problemas—, pero su patrón es un prefijo literal
+      (`Bash(git commit *)`) que no matchea un `git -c … commit`. El hook sí. Evidencia en
+      el transcript de la sesión, `toolu_01VkJpnp64acamGGnBNuuAeF` (regla, Bash),
+      `toolu_016r9a6Pb9y3zRcjSsLWHBTU` (regla, PowerShell) y
+      `toolu_01BwGw4h5hCjGWfYPa7BHpzp` (hook solo, Bash)
 - [ ] **Regla de preaprobación de tools de MCP.** Antes de sumar una tool de MCP al
       allowlist, chequear si mezcla lectura y escritura sobre un archivo versionado crítico;
       si mezcla, excluirla o aceptar el riesgo por escrito. Va en
