@@ -457,11 +457,20 @@ no un feature que se agrega.
          el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
          `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
-- [ ] **Asimetría de git entre shells.** `PowerShell(git *)` aprueba todo git —`push --force`
-      y `reset --hard` incluidos—, mientras que Bash tiene tres entradas granulares.
-      Conviene elegir un criterio y aplicarlo a los dos lados. Viene de
-      `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y borrado el
-      14/8/2026; el original se recupera con
+- [x] **Asimetría de git entre shells — cerrada el 15/8/2026, en la PC.** `PowerShell(git *)`
+      salió del allow y la reemplazan `PowerShell(git add *)` y `PowerShell(git checkout *)`,
+      las mismas dos entradas que ya tenía Bash. **El problema no era "amplio contra
+      granular", que suena a prolijidad:** era que la blanket rule aprobaba sin prompt
+      cualquier subcomando de git —`reset --hard`, `rebase`, `clean -fd`, `branch -D`—,
+      mientras que por Bash esos mismos caían fuera de las tres entradas y preguntaban. El
+      mismo comando destructivo tenía dos comportamientos según el shell que lo escribiera.
+      `commit` y `push` ya estaban igualados en los dos shells por los cuatro `ask` de
+      `.claude/settings.json`, así que nunca fueron el hueco. Encima de todo esto sigue
+      estando lo que el harness fuerza a `ask` por su cuenta, que es otra capa y no se midió
+      acá. ⚠️ **El arreglo no viaja:** `.claude/settings.local.json` está en `.gitignore`
+      (línea 28), así que **la laptop sigue con `PowerShell(git *)`** hasta que se repita el
+      cambio ahí a mano. Viene de `docs/reestructuracion/permisos-curados.md`, absorbido en
+      `docs/estado.md` y borrado el 14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 - [x] **Sumar un hook `PreToolUse` al guardarraíl del commit — escrito y verificado el
       14/8/2026, `.claude/hooks/commit-confirmacion.sh`. Cerrado.** Se verificó en una
