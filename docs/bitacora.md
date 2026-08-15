@@ -361,15 +361,25 @@ específico de ella.
 Es prosa otra vez, que es exactamente el estado que la decisión 2 del 13/8 creía haber
 cerrado.
 
-→ **La mitigación es un hook `PreToolUse`, y no depende de que esto se resuelva.** Un hook
-que sale con código 2 corta la llamada **antes** de que se evalúen las reglas de permiso
-—*"A hook that exits with code 2 stops the tool call before permission rules are
-evaluated"*—, así que no lo afecta el mismo gap. Es además lo que ya dicen `plan.md` §5
-(*"si escribís 'siempre que X, hacé Y' en `CLAUDE.md`, probablemente debería ser un hook"*)
-y las dos fuentes de `critica-metodologia.md` §0: *"Put guardrails in hooks"* y *"cuando
-algo absolutamente no debe pasar, una instrucción es la herramienta equivocada"*. Queda en
-Pendiente, sin escribir todavía: lo que sí hay que traerse de `0c5f9bf` es **verificarlo en
-una sesión distinta de la que lo escriba**, que es el paso que ese commit se salteó.
+→ **La mitigación es un hook `PreToolUse`, y no depende de que esto se resuelva.** El hook
+sale con código 0 y devuelve `permissionDecision: "ask"`: un `ask` **emitido por un hook**
+fuerza el prompt real incluso en modo auto, y el clasificador no lo puede aprobar en
+silencio. Consultada la doc de hooks el 14/8/2026. Es un camino distinto del `ask` declarado
+como regla estática, que es justo el que no dispara, así que el gap no se lo come.
+
+**`exit 2` quedó descartado, y la razón importa.** Corta la llamada **antes** de que se
+evalúen las reglas de permiso —*"A hook that exits with code 2 stops the tool call before
+permission rules are evaluated"*—, que suena a la propiedad ideal, pero le devuelve el
+mensaje **al modelo**: Joaco no ve ningún prompt. Eso es una pared, no una confirmación, y
+dejaría el commit imposible en vez de pedido. El guardarraíl que hace falta acá no es
+"nunca", es "no sin que lo pidan".
+
+Es además lo que ya dicen `plan.md` §5 (*"si escribís 'siempre que X, hacé Y' en
+`CLAUDE.md`, probablemente debería ser un hook"*) y las dos fuentes de
+`critica-metodologia.md` §0: *"Put guardrails in hooks"* y *"cuando algo absolutamente no
+debe pasar, una instrucción es la herramienta equivocada"*. Lo que hay que traerse de
+`0c5f9bf` es **verificarlo en una sesión distinta de la que lo escriba**, que es el paso que
+ese commit se salteó.
 
 ---
 
@@ -419,14 +429,18 @@ no un feature que se agrega.
       `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y borrado el
       14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
-- [ ] **Mover el guardarraíl del commit de una regla `ask` a un hook `PreToolUse`.** Las
-      cuatro `ask` de `.claude/settings.json` no disparan, y la doc oficial dice que
-      deberían: es un gap del producto, no algo que este repo pueda arreglar cambiando
-      config (ver Problemas, 14/8/2026). **El hook no espera a que ese gap se cierre** — es
-      la mitigación mientras exista, y la única que no depende de las reglas de permiso,
-      porque un `exit 2` corta antes de que se evalúen. Un hook sobre `Bash` y `PowerShell`
-      que machee `git commit` y `git push`. **Verificarlo en una sesión distinta de la que
-      lo escriba**, que es el paso que `0c5f9bf` se salteó
+- [x] **Mover el guardarraíl del commit de una regla `ask` a un hook `PreToolUse` — escrito
+      el 14/8/2026, `.claude/hooks/commit-confirmacion.sh`. SIN VERIFICAR TODAVÍA: la
+      verificación tiene que pasar en una sesión distinta de esta.** Por eso sigue acá y no
+      se tacha del todo. Las cuatro `ask` de `.claude/settings.json` no disparan, y la doc
+      oficial dice que deberían: es un gap del producto, no algo que este repo pueda
+      arreglar cambiando config (ver Problemas, 14/8/2026). El hook no espera a que ese gap
+      se cierre — es la mitigación mientras exista. Machea `git commit` y `git push` sobre
+      `Bash` y `PowerShell`, y **devuelve `permissionDecision: "ask"` con código de salida
+      0**, no un código de salida bloqueante: pide confirmación, no bloquea. Qué falta
+      probar: que el harness lo dispare y que el prompt aparezca, por los dos caminos que
+      fallaron el 14/8. **Verificarlo en una sesión distinta de la que lo escribió**, que es
+      el paso que `0c5f9bf` se salteó
 - [ ] **Regla de preaprobación de tools de MCP.** Antes de sumar una tool de MCP al
       allowlist, chequear si mezcla lectura y escritura sobre un archivo versionado crítico;
       si mezcla, excluirla o aceptar el riesgo por escrito. Va en

@@ -44,7 +44,7 @@ prioridad es entender lo que se construye, no llegar rápido.
 
 ## 2. Frescura
 
-Esta versión: **14/8/2026**, sobre el commit **`06a102c`** (el que la agrega es el
+Esta versión: **14/8/2026**, sobre el commit **`a3e9871`** (el que la agrega es el
 siguiente). Para saber si envejeció: `git log -1 --format='%h %ad' --date=short`.
 
 **Si algo de acá contradice al código, manda el código: este archivo está viejo.**
@@ -164,6 +164,7 @@ contra 20:13 del 6/8/2026, `ls -l --time-style=long-iso scenes/main/`) y los dos
 | Al zombie recién se lo puede matar en v0.5 | 6/8/2026 | `design.md` → Huecos |
 | `project_manage` e `input_map_manage` fuera del allowlist | 11/8/2026 | §8 |
 | `ask` sobre `git commit` y `git push`, en el settings que viaja | 13/8/2026 | `.claude/settings.json` |
+| El guardarraíl del commit pasa de regla `ask` a hook `PreToolUse` | 14/8/2026 | §8 |
 
 ## 8. Herramientas y configuración
 
@@ -181,7 +182,7 @@ máquina**, que en el otro clon apuntan a un home que no existe.
 | Viaja con el repo | Se queda en la máquina |
 |---|---|
 | `.mcp.json` — Context7, que es una URL | El bloque de este proyecto en `~/.claude.json`: godot-ai se lanza por `~/.local/bin/uvx.exe` |
-| `.claude/settings.json` — los 2 hooks, los 15 `deny` del catálogo, los 4 `ask` de git | `.claude/settings.local.json` — permisos, con el home de cada uno adentro |
+| `.claude/settings.json` — los 3 hooks, los 15 `deny` del catálogo, los 4 `ask` de git | `.claude/settings.local.json` — permisos, con el home de cada uno adentro |
 | `CLAUDE.md`, las 5 rules, el skill, `docs/`, `tests/`, `tools/` | `~/.claude/CLAUDE.md`, la skill `catalogo-claude` y la memoria del proyecto |
 
 **Las cuatro reglas `ask` de `git commit` y `git push` están puestas y no disparan.** Están
@@ -190,8 +191,16 @@ con el prompt puesto. Medido el 14/8/2026 en Claude Code 2.1.232: un `git commit
 otro por PowerShell pasaron **los dos sin pedir confirmación**. La documentación oficial dice
 que eso no debería pasar en ningún modo —*"Explicit ask rules still force a prompt"*—, así
 que no es una config mal puesta de este lado: **es comportamiento documentado que no coincide
-con el observado.** Hasta que se cierre, lo único que frena un commit por iniciativa propia
-es la prosa de `.claude/rules/commits.md`. Detalle y citas en `bitacora.md` → Problemas.
+con el observado.** Detalle y citas en `bitacora.md` → Problemas.
+
+**La mitigación es el tercer hook, `commit-confirmacion.sh`, y está escrita sin verificar.**
+Corre en `PreToolUse` sobre `Bash` y `PowerShell`, machea `git commit` y `git push`, y
+devuelve `permissionDecision: "ask"` con código de salida 0 — un `ask` emitido por un hook es
+un camino distinto del `ask` declarado como regla estática, que es el que no dispara. Pide
+confirmación, no bloquea. **Lo que falta probar es que el harness lo dispare y que el prompt
+aparezca**, y eso tiene que pasar en una sesión distinta de la que lo escribió: un hook
+escrito hoy se lee de la config que ya estaba cargada. Hasta entonces, lo que efectivamente
+frena un commit por iniciativa propia sigue siendo la prosa de `.claude/rules/commits.md`.
 
 Lo que sigue copiado a mano en varios lugares es la ruta
 `C:\Godot\Godot_v4.7.1-stable_win64.exe` (par D4 de `inventario-pares.md`); poner Godot en
