@@ -476,11 +476,11 @@ no un feature que se agrega.
       el transcript de la sesión, `toolu_01VkJpnp64acamGGnBNuuAeF` (regla, Bash),
       `toolu_016r9a6Pb9y3zRcjSsLWHBTU` (regla, PowerShell) y
       `toolu_01BwGw4h5hCjGWfYPa7BHpzp` (hook solo, Bash)
-- [ ] **Regla de preaprobación de tools de MCP.** Antes de sumar una tool de MCP al
+- [x] **Regla de preaprobación de tools de MCP — escrita el 15/8/2026 en
+      `.claude/rules/herramientas.md`. Cerrada.** Antes de sumar una tool de MCP al
       allowlist, chequear si mezcla lectura y escritura sobre un archivo versionado crítico;
-      si mezcla, excluirla o aceptar el riesgo por escrito. Va en
-      `.claude/rules/herramientas.md` cuando se escriba — todavía no está en ningún rule.
-      Viene de `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y
+      si mezcla, excluirla o aceptar el riesgo por escrito. Viene de
+      `docs/reestructuracion/permisos-curados.md`, absorbido en `docs/estado.md` y
       borrado el 14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 - [x] **Instalar gdUnit4 — hecho el 6/8/2026, v6.2.0**, bajando el `.zip` del tag de GitHub

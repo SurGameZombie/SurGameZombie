@@ -21,6 +21,23 @@ Si la ficha dice `peligroso`, se avisa primero, con el riesgo concreto sobre la 
 alcanza con nombrar el veredicto: hay que decir **qué hace** la herramienta que la vuelve
 peligrosa.
 
+## Una tool de MCP que mezcla lectura y escritura no se preaprueba
+
+Antes de sumar una tool de MCP al allowlist, chequear si mezcla lectura y escritura sobre un
+archivo versionado crítico. **Si mezcla, se excluye o se acepta el riesgo por escrito**, con
+el motivo.
+
+No hay término medio, y no es por prolijidad: **el permiso es por nombre de tool y no se
+puede acotar más.** El parser rechaza los paréntesis —*"MCP rules do not support patterns in
+parentheses"*—, así que solo acepta el nombre pelado o `mcp__<server>__*`. Aprobar el nombre
+aprueba **todas** las ops de esa tool: no hay forma de aprobar `settings_get` y no
+`settings_set`, ni `list` y no `bind_event`.
+
+Ya pasó, y ese es el ejemplo de qué es un archivo crítico: `project_manage` e
+`input_map_manage` escriben `project.godot` —autoloads, input map, plugins, navegación,
+capas de física—, donde un error no rompe una cosa sino el arranque entero. Salieron del
+allowlist el 11/8/2026; el relato de qué escribieron está en `229caac`.
+
 ## Verificar autor/repo exacto, nunca solo el nombre
 
 Hay herramientas distintas con nombre idéntico y perfiles de riesgo opuestos, y hay repos
