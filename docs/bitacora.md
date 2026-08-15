@@ -562,9 +562,12 @@ Devuelve `permissionDecision: "ask"` con `exit=0`, y elige bien cuál de los dos
 **Y queda algo para mirar cuando se toque ese hook:** el texto que devuelve para push afirma
 *"en una forma que las reglas `ask` … no matchean"*, y en un `git push` pelado eso es falso
 —la regla sí lo matchea—. Es la misma clase de error que `ce5f439` arregló para el mensaje
-de commit: un cuadro que nombra una causa que no es. No se tocó acá. La otra mitad de aquel
-`Not-tested:` —que el texto nuevo se **lea bien renderizado** en un prompt real— sigue
-abierta.
+de commit: un cuadro que nombra una causa que no es. **Arreglado el mismo día, en el commit
+siguiente:** el texto ya no dice qué capa está pidiendo la confirmación, porque cuál es
+depende de la forma del comando y el script no lo puede saber sin reimplementar el matcheo
+de `settings.json` —o sea, sin crear otro par duplicado de los que nadie compara—. La otra
+mitad de aquel `Not-tested:` —que el texto se **lea bien renderizado** en un prompt real—
+sigue abierta, y ahora aplica al texto nuevo.
 
 **[15/8/2026]** — **Se ejerció el camino rojo del hook de consistencia sobre los cuatro
 pares, uno por uno, y los cuatro se pusieron rojos nombrando los dos lados.** No es la

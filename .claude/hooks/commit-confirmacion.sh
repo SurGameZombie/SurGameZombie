@@ -15,6 +15,15 @@
 # `ask`"* (doc de permissions). Así que para probar que este hook aporta algo hay que
 # testearlo con una variante que la regla no agarre.
 #
+# **Por eso el `permissionDecisionReason` de abajo NO dice cuál de las dos capas está
+# pidiendo la confirmación.** Cuál es depende de la forma del comando, y este script no
+# lo puede saber sin reimplementar el matcheo de `.claude/settings.json` —un dato que
+# vive en otro archivo, o sea un par duplicado más, de los que nadie compara—. Decirlo
+# igual fue el bug: el texto afirmaba *"las reglas `ask` no matchean esto"* también en
+# los cuadros que salían justo por la regla, que son todos los de un `git commit` o un
+# `git push` pelados. Es el mismo error que `ce5f439` corrigió del lado commit, en este
+# mismo texto: nombrar una causa que no es.
+#
 # **No reemplaza al `ask` conceptualmente:** pide confirmación, no bloquea. El
 # mecanismo es `permissionDecision: "ask"` con código de salida 0, NO un `exit 2`.
 # Un `ask` emitido por un hook fuerza el prompt real incluso en modo auto y el
@@ -60,7 +69,7 @@ cat <<JSON
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "ask",
-    "permissionDecisionReason": "Esto es $accion, en una forma que las reglas \`ask\` de .claude/settings.json no matchean —su patrón es un prefijo literal y este comando mete algo entre \`git\` y el subcomando—, así que la confirmación la pide este hook. Recordá que el default de .claude/rules/commits.md es preparar el mensaje y parar ahí: terminar una tarea no habilita a commitearla, y la autorización de un pedido no se hereda al siguiente. Si esto no lo pediste explícitamente ahora, decí que no."
+    "permissionDecisionReason": "Esto es $accion. El default de .claude/rules/commits.md es preparar el mensaje y parar ahí: terminar una tarea no habilita a commitearla ni a pushearla, y la autorización de un pedido no se hereda al siguiente. Si esto no lo pediste explícitamente ahora, decí que no."
   }
 }
 JSON
