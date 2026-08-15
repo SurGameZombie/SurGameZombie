@@ -457,7 +457,7 @@ no un feature que se agrega.
          el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
          `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
-- [x] **Asimetría de git entre shells — cerrada el 15/8/2026, en la PC.** `PowerShell(git *)`
+- [x] **Asimetría de git entre shells — cerrada el 15/8/2026.** `PowerShell(git *)`
       salió del allow y la reemplazan `PowerShell(git add *)` y `PowerShell(git checkout *)`,
       las mismas dos entradas que ya tenía Bash. **El problema no era "amplio contra
       granular", que suena a prolijidad:** era que la blanket rule aprobaba sin prompt
@@ -467,10 +467,11 @@ no un feature que se agrega.
       `commit` y `push` ya estaban igualados en los dos shells por los cuatro `ask` de
       `.claude/settings.json`, así que nunca fueron el hueco. Encima de todo esto sigue
       estando lo que el harness fuerza a `ask` por su cuenta, que es otra capa y no se midió
-      acá. ⚠️ **El arreglo no viaja:** `.claude/settings.local.json` está en `.gitignore`
-      (línea 28), así que **la laptop sigue con `PowerShell(git *)`** hasta que se repita el
-      cambio ahí a mano. Viene de `docs/reestructuracion/permisos-curados.md`, absorbido en
-      `docs/estado.md` y borrado el 14/8/2026; el original se recupera con
+      acá. **Las cuatro entradas viven en `.claude/settings.json`, que viaja con el repo:**
+      salieron de `settings.local.json`, que está en `.gitignore` (línea 28) y por eso dejaba
+      el criterio en una máquina sola. Ahora es el mismo en las dos y en la de Mathi cuando
+      exista, sin repetir nada a mano. Viene de `docs/reestructuracion/permisos-curados.md`,
+      absorbido en `docs/estado.md` y borrado el 14/8/2026; el original se recupera con
       `git log --diff-filter=D -- docs/reestructuracion/permisos-curados.md`
 - [x] **Sumar un hook `PreToolUse` al guardarraíl del commit — escrito y verificado el
       14/8/2026, `.claude/hooks/commit-confirmacion.sh`. Cerrado.** Se verificó en una

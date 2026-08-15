@@ -3,6 +3,12 @@
     "additionalDirectories": [
       "C:\\ClaudeMCPsPlugingsSkillsETC"
     ],
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git checkout *)",
+      "PowerShell(git add *)",
+      "PowerShell(git checkout *)"
+    ],
     "deny": [
       "Edit(//c/ClaudeMCPsPlugingsSkillsETC/*.md)",
       "Edit(//c/ClaudeMCPsPlugingsSkillsETC/.gitignore)",
