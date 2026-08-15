@@ -33,9 +33,18 @@ file=$(
 )
 [ -n "$file" ] || exit 0
 
-# Los cuatro lugares donde vive algún lado de un par comparado.
+# Los lugares donde vive algún lado de un par comparado. Los primeros cuatro van
+# por directorio: cualquier .gd de scripts/ o .tscn de scenes/ puede ser un lado.
+#
+# Los dos de abajo van por ruta EXACTA, y no por `docs/*.md` ni
+# `.claude/skills/**`, a propósito: son los dos únicos archivos de doc que la
+# suite compara contra algo. Un glob haría que cada edición de cualquier doc del
+# repo se coma la suite entera —3,1 s, y corre `-a res://tests`, no solo el
+# archivo que importa— sin comparar nada que no se hubiera comparado igual. El
+# día que un tercer doc entre a un par, se le agrega su renglón acá.
 case "$file" in
 	*/scripts/*.gd | */resources/*.tres | */scenes/*.tscn | */project.godot) ;;
+	*/docs/design.md | */.claude/skills/barrido-navmesh/SKILL.md) ;;
 	*) exit 0 ;;
 esac
 

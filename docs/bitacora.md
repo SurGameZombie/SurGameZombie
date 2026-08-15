@@ -457,6 +457,20 @@ no un feature que se agrega.
          el save de v0.5, no después: cada una impone requisitos aguas arriba. Lista en
          `docs/netcode.md` → "Qué entra al save"
 - [ ] Definir quién tiene el plan Pro de Claude
+- [ ] **Lo que el disparo de `consistencia.sh` sigue sin cubrir**, después de que el
+      15/8/2026 entraran al `case` `docs/design.md` y el `SKILL.md` de barrido-navmesh.
+      Son dos cosas de tamaños distintos, y ninguna de las dos es agregar un patrón más:
+      1. **`tests/*.gd` y `tools/*.gd` no disparan nada** —el patrón es `*/scripts/*.gd`—,
+         así que `consistencia_test.gd` no se vigila a sí mismo. Ya está anotado como
+         `Directive:` en `5bdc8e3`. Sumarlos es una línea, pero cambia qué significa que el
+         hook se ponga rojo —la suite correría al editar la suite—, y eso se decide antes
+      2. **Una escritura que no pase por `Edit`/`Write` no dispara ningún hook.** Un `sed -i`
+         o un `>` desde `Bash`, una tool del MCP de Godot (`script_patch`, `scene_save`) o
+         una edición hecha a mano en el editor no pasan por `PostToolUse`. Esto no se tapa
+         con un patrón: necesita otro mecanismo —un hook de git, o correr la suite en otro
+         momento— y es conversación aparte
+      Los dos salieron de `docs/reestructuracion/mapa-metodologia.md` §2.3, que se borra
+      cuando cierre la reestructuración: por eso quedan acá
 - [x] **Asimetría de git entre shells — cerrada el 15/8/2026.** `PowerShell(git *)`
       salió del allow y la reemplazan `PowerShell(git add *)` y `PowerShell(git checkout *)`,
       las mismas dos entradas que ya tenía Bash. **El problema no era "amplio contra
@@ -576,10 +590,11 @@ vale 30.0`. Con `file_path` del `SKILL.md`, `exit=0` igual.
 
 O sea: **la suite los agarra a los dos, el hook no los mira.** Quien mueva una coordenada en
 el skill o toque la tabla de `design.md` queda desincronizado en silencio hasta que alguien
-roce un `.gd` o un `.tscn`. Cerrarlo es agregar dos patrones al `case`, y **el costo es que
-cada edición de doc se coma los 3,1 s de la suite entera** —el hook corre `-a res://tests`,
-no solo este archivo—. Queda sin decidir a propósito: es cambio de `consistencia.sh` y esto
-era una prueba.
+roce un `.gd` o un `.tscn`. **Decidido y cerrado el mismo día:** entraron al `case` las dos
+rutas exactas —`*/docs/design.md` y `*/.claude/skills/barrido-navmesh/SKILL.md`— y no los
+globs `docs/*.md` ni `.claude/skills/**`, que le habrían cobrado los 3,1 s de la suite
+entera a cada edición de cualquier doc del repo. Lo que el disparo sigue sin cubrir quedó en
+Pendiente, arriba.
 
 **[12/8/2026]** — **La suite entera corrió también en la laptop, y ese dato no estaba en
 este repo.** Las 6 suites y los 49 casos de gdUnit4 pasaron de punta a punta en las dos
