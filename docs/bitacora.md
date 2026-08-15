@@ -518,6 +518,69 @@ no un feature que se agrega.
 
 ## Registro
 
+**[15/8/2026]** — **Se ejerció el camino rojo del hook de consistencia sobre los cuatro
+pares, uno por uno, y los cuatro se pusieron rojos nombrando los dos lados.** No es la
+primera vez que se prueba en rojo —`f1725bb` corrió cinco controles negativos contra el
+runner y `5bdc8e3` uno contra el hook—, pero sí la primera que **los cuatro pares pasan por
+el hook**, que es el camino por el que el aviso llega de verdad. Esto no tocó
+`consistencia.sh` ni la suite: es prueba del chequeo, no cambio del chequeo.
+
+El molde de cada corrida es el JSON que le manda el harness al hook por stdin:
+
+```bash
+printf '%s' '{"tool_input":{"file_path":"C:\\Proyectos\\SurGameZombie\\scenes\\main\\world.tscn"}}' \
+  | bash .claude/hooks/consistencia.sh; echo "exit=$?"
+```
+
+En verde no imprime nada y sale `exit=0`; **3,0 / 3,1 / 3,1 s en tres corridas de esa misma
+línea**, que es el 3,1 s que dice el comentario del script. En rojo sale `exit=2` —el
+bloqueante, el que despierta al modelo— y gdUnit4 abajo sale con código 100. Entre rotura y
+rotura: `git checkout -- <archivo>` y `git status --short` vacío.
+
+Qué se rompió y qué contestó, textual:
+
+- **C3, las escenas spawneables.** El `_spawnable_scenes` del `ZombieSpawner` de
+  `world.tscn` apuntando a `player.tscn` —el copy-paste del spawner sin cambiar la escena,
+  que es más realista que el `player_OLD.tscn` inexistente de `f1725bb`—. →
+  `world.gd preloadea ["res://scenes/enemies/zombie.tscn", "res://scenes/player/player.tscn"]
+  y world.tscn replica ["res://scenes/player/player.tscn", "res://scenes/player/player.tscn"]`.
+  Imprime las dos listas enteras, no un "no coinciden".
+- **A2, el radio de la cápsula.** `NavigationObstacle3D` de `player.tscn` de 0.4 a 0.8, que
+  es el bug de ADR-0008 decisión 2 tal cual. →
+  `res://scenes/player/player.tscn: CapsuleShape3D_player tiene radius 0.4 y
+  NavigationObstacle3D tiene 0.8`. Nombra los dos bloques, no dos números sueltos.
+- **A12, la vida.** Los dos números a la vez, y el de `max_health` nunca se había roto:
+  `max_health` 100→120 en `player_stats.gd` y `REVIVE_HEALTH` 30→25 en `world.gd`. → los
+  dos renglones en el mismo mensaje, `design.md dice 30.0 y REVIVE_HEALTH de world.gd vale
+  25.0` y `design.md dice 100.0 y max_health de player_stats.gd vale 120.0`. **Que sean dos
+  es el dato:** el `grep -E` del hook filtra la salida de Godot renglón por renglón, así que
+  un mensaje multilínea podría perder la mitad en el camino, y no la pierde.
+- **C5, las coordenadas del skill.** Dos corridas, una por archivo, y las dos por el lado
+  **escena** —`f1725bb` había roto el lado `SKILL.md`—. Puerta sur de `yard.tscn` movida en
+  x de -20 a -17.5 → `puerta sur del galpón: el skill usa x=-20.0 z=-11.8 y la escena está
+  en x=-17.5 z=-11.8`. `ZombieSpawn` de `world.tscn` movido en z de -19 a -22.5 →
+  `spawn del zombie: el skill usa x=-16.0 z=-19.0 y la escena está en x=-16.0 z=-22.5`.
+  Ese último es la única de las tres comparaciones cuyo lado escena vive en `world.tscn` y
+  no en `yard.tscn`, y no se había ejercido nunca.
+
+**Lo que salió mal es el disparador, no el chequeo: el hook no mira el lado doc de dos de
+los cuatro pares.** El `case` de `consistencia.sh` cubre `scripts/*.gd`, `resources/*.tres`,
+`scenes/*.tscn` y `project.godot`; `docs/design.md` (par A12) y
+`.claude/skills/barrido-navmesh/SKILL.md` (par C5) quedan afuera. **Ya estaba escrito, pero
+como inferencia y en un doc que se borra:** `docs/reestructuracion/mapa-metodologia.md` §2.3
+lo anota bajo "inferido de los patrones de cada `case`". Ahora está medido: con `design.md`
+cambiado a mano de "30 de 100" a "40 de 100", el hook con `file_path` de `docs/design.md`
+sale `exit=0` **sin correr nada**, y el mismo repo desincronizado disparado desde
+`scripts/world/world.gd` sale `exit=2` con `design.md dice 40.0 y REVIVE_HEALTH de world.gd
+vale 30.0`. Con `file_path` del `SKILL.md`, `exit=0` igual.
+
+O sea: **la suite los agarra a los dos, el hook no los mira.** Quien mueva una coordenada en
+el skill o toque la tabla de `design.md` queda desincronizado en silencio hasta que alguien
+roce un `.gd` o un `.tscn`. Cerrarlo es agregar dos patrones al `case`, y **el costo es que
+cada edición de doc se coma los 3,1 s de la suite entera** —el hook corre `-a res://tests`,
+no solo este archivo—. Queda sin decidir a propósito: es cambio de `consistencia.sh` y esto
+era una prueba.
+
 **[12/8/2026]** — **La suite entera corrió también en la laptop, y ese dato no estaba en
 este repo.** Las 6 suites y los 49 casos de gdUnit4 pasaron de punta a punta en las dos
 máquinas, no solo en la PC. **Lo reportó Joaco en el chat de criterio, así que no hay
