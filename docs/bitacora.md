@@ -464,7 +464,9 @@ no un feature que se agrega.
       cualquier subcomando de git —`reset --hard`, `rebase`, `clean -fd`, `branch -D`—,
       mientras que por Bash esos mismos caían fuera de las tres entradas y preguntaban. El
       mismo comando destructivo tenía dos comportamientos según el shell que lo escribiera.
-      `commit` y `push` ya estaban igualados en los dos shells por los cuatro `ask` de
+      **`checkout` quedó como `allow` a propósito y no se sumó a los destructivos:** no borra
+      nada fuera del path que se le pide, a diferencia de `reset --hard` o `clean -fd`, que
+      eran los que importaba tapar. `commit` y `push` ya estaban igualados en los dos shells por los cuatro `ask` de
       `.claude/settings.json`, así que nunca fueron el hueco. Encima de todo esto sigue
       estando lo que el harness fuerza a `ask` por su cuenta, que es otra capa y no se midió
       acá. **Las cuatro entradas viven en `.claude/settings.json`, que viaja con el repo:**
