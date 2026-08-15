@@ -532,6 +532,40 @@ no un feature que se agrega.
 
 ## Registro
 
+**[15/8/2026]** — **El `ask` de `Bash(git push *)` disparó en un push real, y eso paga la
+mitad de una deuda de `ce5f439`.** Al pushear `d805bda` y `81a230c` saltó el prompt en
+pantalla. **Lo confirmó Joaco con captura, no yo:** desde acá un `tool_result` exitoso se ve
+igual con confirmación aprobada que sin prompt, que es exactamente el problema que
+`ce5f439` ya había tenido que resolver testeando de a un paso por vez. El `Not-tested:` de
+ese commit decía que la rama `git push` no se había ejercido *"ni por regla ni por hook"*.
+La regla queda ejercida.
+
+**La del hook no, y no se puede concluir de ese prompt.** `git push origin main` machea el
+prefijo literal `Bash(git push *)`, y cuando las dos capas matchean la misma llamada el
+prompt sale por la regla —es el `Directive:` del propio `ce5f439` y la cita del doc de
+permissions que está en la cabecera del hook—. Para atribuirle un prompt de push al hook
+hace falta una forma que la regla no agarre, `git -c … push`, que es lo mismo que hizo falta
+para el commit. **Si la captura sigue a mano, lo dirime mirar a quién cita el cuadro.**
+
+Lo que sí quedó medido es la rama en aislamiento, con el payload exacto de ese push:
+
+```bash
+printf '%s' '{"tool_name":"Bash","tool_input":{"command":"git push origin main && git log --oneline -2 && git status -sb | head -1","description":"Pushear los dos commits"}}' \
+  | bash .claude/hooks/commit-confirmacion.sh; echo "exit=$?"
+```
+
+Devuelve `permissionDecision: "ask"` con `exit=0`, y elige bien cuál de los dos nombra: dice
+**`un git push`** y no `un git commit`, aunque la palabra "commits" esté en la
+`description`. El `","` crudo entre campos del JSON impide que el match cruce de `command` a
+`description`, que es para lo que estaba puesto.
+
+**Y queda algo para mirar cuando se toque ese hook:** el texto que devuelve para push afirma
+*"en una forma que las reglas `ask` … no matchean"*, y en un `git push` pelado eso es falso
+—la regla sí lo matchea—. Es la misma clase de error que `ce5f439` arregló para el mensaje
+de commit: un cuadro que nombra una causa que no es. No se tocó acá. La otra mitad de aquel
+`Not-tested:` —que el texto nuevo se **lea bien renderizado** en un prompt real— sigue
+abierta.
+
 **[15/8/2026]** — **Se ejerció el camino rojo del hook de consistencia sobre los cuatro
 pares, uno por uno, y los cuatro se pusieron rojos nombrando los dos lados.** No es la
 primera vez que se prueba en rojo —`f1725bb` corrió cinco controles negativos contra el
