@@ -506,6 +506,27 @@ no un feature que se agrega.
 
 ## Registro
 
+**[12/8/2026]** — **La suite entera corrió también en la laptop, y ese dato no estaba en
+este repo.** Las 6 suites y los 49 casos de gdUnit4 pasaron de punta a punta en las dos
+máquinas, no solo en la PC. **Lo reportó Joaco en el chat de criterio, así que no hay
+artefacto del repo que lo respalde:** hasta hoy figuraba solo en el catálogo
+(`proyectos/surgamezombie/README.md` → "Cómo se verificó", que lo marca con su propio ⚠️ "no
+sale del repo"). Acá adentro aparecía únicamente citado de paso en
+`docs/reestructuracion/mapa-metodologia.md` §8.4, que es documento de trabajo y se borra
+cuando la reestructuración cierre.
+
+Mirado en frío, el historial **parece decir lo contrario**, y por eso conviene dejarlo
+escrito: `a3a1dc5` —el commit que instaló gdUnit4— lleva `Not-tested: solo se corrió en
+Windows`. No contradice nada; es del 6/8, cuando la suite eran los 2 casos del smoke test, y
+las dos máquinas son Windows igual. El hueco real es otro: los tres trailers `Tested:` que
+dicen "6 suites / 49 casos, código 0" **no dicen en qué máquina corrió**.
+
+**Directiva, que es lo único que evita repetirlo: cuando una corrida valga en las dos
+máquinas, que el trailer `Tested:` lo diga.** Un dato que solo vive en un chat se pierde al
+cerrarlo, y el catálogo termina siendo el único lugar donde quedó, que es al revés de como
+debería ser. **Y no es un playtest:** mide corrección, no cómo se juega. El playtest de
+quince minutos de v0.3 sigue pendiente.
+
 **[entre el 7 y el 10/8/2026]** — **La mentira 3 de F4 se jugó con dos instancias y el host
 la rechazó.** Un cliente le mandó `apply_stack_added` al `InventorySync` de otro jugador por
 el path directo y las 99 palancas no aparecieron del otro lado, así que la autoridad de ese
