@@ -67,7 +67,7 @@ La primera línea va en español y dice el **por qué**, no el qué. Nada de `ca
 `Not-tested:` es la fuente de la lista de deuda de verificación del proyecto:
 
 ```bash
-git log --grep="Not-tested" --oneline
+git log --grep="^Not-tested:" --oneline
 ```
 
 Cuando aparece un bug raro, ese es el primer lugar donde mirar.
@@ -95,15 +95,15 @@ reescribir el historial invalida los hashes que lo citan.
 Si lo que pagó la deuda fue un playtest y no un cambio de código, el trailer va en el commit
 que lo **registra** —el de la entrada en `docs/bitacora.md`—, que es el único que hay.
 
-Sin esto, `git log --grep="Not-tested"` es append-only —nunca se resta nada—, así que una
+Sin esto, `git log --grep="^Not-tested:"` es append-only —nunca se resta nada—, así que una
 lista de deuda armada con ese comando miente desde el día uno: incluye lo que ya se pagó.
 
 **La deuda abierta son los `Not-tested:` cuyo hash no aparece citado en ningún
 `Tested-later:` posterior.**
 
 ```bash
-git log --grep="Not-tested" --oneline    # todo lo que alguna vez quedó sin verificar
-git log --grep="Tested-later" --oneline  # lo que ya se pagó, con el hash de la deuda
+git log --grep="^Not-tested:" --oneline    # todo lo que alguna vez quedó sin verificar
+git log --grep="^Tested-later:" --oneline  # lo que ya se pagó, con el hash de la deuda
 ```
 
 Un `Tested-later:` no tiene que cerrar todo el `Not-tested:` del commit que cita: si paga
