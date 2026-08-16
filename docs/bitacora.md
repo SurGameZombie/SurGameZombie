@@ -532,6 +532,28 @@ no un feature que se agrega.
 
 ## Registro
 
+**[16/8/2026]** — **El harness sí exporta `${CLAUDE_PROJECT_DIR}`, así que los hooks
+resuelven desde cualquier cwd.** Es lo que `8044d7f` dejó abierto: su matriz de 3 hooks × 3
+cwd fijaba la variable a mano en el shell, o sea que probaba que la ruta resuelve, no que
+Claude Code la provea. Se comprobó en una sesión nueva —un hook se lee de la config cargada
+al arrancar—, con dos comandos con el cwd fuera de la raíz del repo, uno por cada matcher
+del hook:
+
+```bash
+cd /c/ClaudeMCPsPlugingsSkillsETC && git log --oneline -5            # Bash
+Set-Location C:\ClaudeMCPsPlugingsSkillsETC; Get-ChildItem proyectos # PowerShell
+```
+
+Ninguno de los dos mostró `commit-confirmacion.sh: No such file or directory`, que era el
+síntoma del 127. El hook corrió y salió en silencio, que es lo correcto: ninguno de los dos
+comandos machea `git commit` ni `git push`.
+
+**Esto no prueba nada sobre el prompt**, y no hace falta que lo pruebe: que el cuadro
+aparezca ya lo verificó `ce5f439` el 14/8, de a un paso por vez y con captura. Lo que sigue
+abierto del hook es otra cosa, y son dos: que el texto **nuevo** del cuadro se lea bien
+renderizado (`12a41e8`), y la rama `git push` **atribuible al hook** —hace falta un `git -c
+… push`, porque un push pelado lo gana la regla `ask`— (`ce5f439`, mitad todavía abierta).
+
 **[15/8/2026]** — **El `ask` de `Bash(git push *)` disparó en un push real, y eso paga la
 mitad de una deuda de `ce5f439`.** Al pushear `d805bda` y `81a230c` saltó el prompt en
 pantalla. **Lo confirmó Joaco con captura, no yo:** desde acá un `tool_result` exitoso se ve
