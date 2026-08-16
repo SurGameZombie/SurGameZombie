@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/commit-confirmacion.sh",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/commit-confirmacion.sh\"",
             "timeout": 10,
             "statusMessage": "¿Esto es un commit o un push?"
           }
@@ -53,14 +53,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/consistencia.sh",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/consistencia.sh\"",
             "timeout": 120,
             "statusMessage": "Comparando los pares duplicados…",
             "asyncRewake": true
           },
           {
             "type": "command",
-            "command": "bash .claude/hooks/navmesh-recordatorio.sh",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/navmesh-recordatorio.sh\"",
             "timeout": 15,
             "statusMessage": "¿Se tocó el NavMesh?"
           }

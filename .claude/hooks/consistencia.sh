@@ -48,7 +48,19 @@ case "$file" in
 	*) exit 0 ;;
 esac
 
-cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 0
+# El cwd de un hook es "the current directory", no la raíz del repo (doc de hooks),
+# así que hay que llegar a la raíz explícitamente. `git rev-parse --show-toplevel`
+# NO sirve: pregunta por el repo del cwd, y el catálogo montado por
+# `additionalDirectories` es un repo git propio. Desde ahí devolvía
+# C:/ClaudeMCPsPlugingsSkillsETC y esto corría Godot con `--path .` sobre el
+# catálogo. Antes quedaba tapado porque el hook ni se encontraba a sí mismo.
+#
+# `CLAUDE_PROJECT_DIR` viene exportada en el entorno del proceso, no solo sustituida
+# en el `command`. El fallback es para cuando alguien corre esto a mano, donde no
+# existe — y va con `:-` y no pelada porque con el `set -u` de arriba una variable
+# ausente aborta el script, y un hook que aborta con código distinto de 2 no bloquea
+# nada: falla abierto y en silencio.
+cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 
 # La ruta de Godot es distinta en cada máquina (CLAUDE.md → Comandos), así que
 # NO se hardcodea una sola: primero el PATH —que es lo que CLAUDE.md recomienda—,
