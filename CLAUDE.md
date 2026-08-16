@@ -137,26 +137,38 @@ Si la duda es menor, asumí lo razonable y decí explícitamente qué asumiste.
 
 ### Formato de las respuestas
 
-El cierre de una tarea tiene tres partes, en este orden. Las que no aplican se
-omiten enteras, no se escriben vacías.
+El cierre de una tarea tiene cuatro partes, en este orden. **Las que no aplican se omiten
+enteras, nunca vacías.** Un "Decidí yo: nada" es el mismo ruido que el `Not-tested: nada
+que testear` que `.claude/rules/commits.md` documenta como ya colado varias veces.
 
-**Qué cambié** — una o dos frases. Qué hace ahora el código. No repitas el diff,
-lo vamos a leer.
+**Qué hice** — una o dos frases. Qué hace ahora el código. No repitas el diff, lo vamos a
+leer.
 
-**Probá vos** — solo lo que no podés verificar: si se ve bien, si se siente bien,
-si los números están balanceados, si la latencia se nota. Formato: acción concreta
-→ qué debería pasar si está bien. Si no hay nada, omitila.
+**Decidí yo** — lo que resolví sin preguntar. Cada punto dice de dónde sale: **decisión
+mía**, o **decisión que ya estaba tomada y solo apliqué** (una ADR, `design.md`, una rule).
+Es la distinción de `.claude/rules/limites.md` —dato verificado / inferencia / suposición—
+aplicada a decisiones: sin ella, criterio mío se lee después como doctrina del equipo.
 
-**Decidí vos** — solo si hay una decisión real bloqueada. Una pregunta concreta
-con opciones. No un ensayo.
+**Decidí vos** — solo si hay una decisión real bloqueada: no puedo seguir sin la respuesta.
+Una pregunta concreta con opciones. No un ensayo.
 
-**Toda afirmación numérica va con el comando que la produjo.** Un conteo, una medición o
-un porcentaje sin el comando al lado es una cifra que nadie puede desmentir, y las
-verificaciones que salen bien son justo donde viven los conteos. Si el número no salió de
-un comando, decí de dónde salió.
+**Probá vos** — lo que no puedo verificar y una persona sí: si se ve bien, si se siente
+bien, si los números están balanceados, si la latencia se nota. **No bloquea nada: se
+acumula.** Formato: acción concreta → qué debería pasar si está bien. Es lo mismo que va a
+`Not-tested:` cuando haya commit, y se salda con `Tested-later:` (`.claude/rules/commits.md`).
 
-Objetivo de largo: media pantalla. Si no entra, es señal de que la tarea era
-demasiado grande y hay que partirla.
+**El lector es el chat de criterio, y puede leer este repo.** Así que lo que ya está escrito
+se cita, no se re-explica: por qué existe un trailer, qué hace un hook, qué dice una
+convención ya establecida. Eso vale para el eje de proyecto y proceso. **El otro eje no se
+toca:** las convenciones de Godot que no son obvias y el porqué de las decisiones de diseño
+de juego se siguen explicando igual —ver "Están aprendiendo — explicá"—, porque ese eje es
+para Joaco y viaja a través del relay.
+
+**El largo lo determina cuántas decisiones y hallazgos hay, no cuánto costó llegar.** Lo que
+se recorta es el relato del camino. **La evidencia pegada a una afirmación no es relato:** el
+comando detrás de un número y el `archivo:línea` detrás de una afirmación sobre el código se
+quedan siempre; si el número no salió de un comando, decí de dónde salió. Si aun así no entra
+en media pantalla, la señal es que la tarea era demasiado grande y hay que partirla.
 
 ### Qué no escribir nunca
 
@@ -182,8 +194,6 @@ Ahí largo está bien. En el resto, el default es corto.
 
 Si algo lo podés resolver o verificar vos, resolvelo y no lo cuentes.
 Si no podés, decilo en una línea accionable.
-
-La brevedad se aplica a la narración, no a la evidencia: un número siempre lleva su comando.
 
 ### Están aprendiendo — explicá
 
